@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { onValue, ref } from 'firebase/database';
 import { rtdb } from '../firebase';
+import { TIMING } from '../constants';
 
 /**
  * Server-aligned wall clock in ms, ticking ~twice a second. Uses RTDB
@@ -13,7 +14,7 @@ export function useServerNow(): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const u = onValue(ref(rtdb, '.info/serverTimeOffset'), (s) => setOffset(Number(s.val()) || 0));
-    const t = setInterval(() => setNow(Date.now()), 500);
+    const t = setInterval(() => setNow(Date.now()), TIMING.serverTickMs);
     return () => { u(); clearInterval(t); };
   }, []);
   return now + offset;

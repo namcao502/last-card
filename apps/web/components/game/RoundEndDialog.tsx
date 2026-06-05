@@ -5,6 +5,7 @@ import type { RoomMeta, SeatRow } from '@/lib/hooks/useRoom';
 import { useAuth } from '@/lib/auth';
 import { callNextRound } from '@/lib/functions';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { STRINGS } from '@/lib/constants';
 
 interface RoundEndDialogProps {
   roomId: string;
@@ -25,8 +26,8 @@ export function RoundEndDialog({ roomId, meta, seats, winnerId }: RoundEndDialog
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
-        <h2 className="text-2xl font-black">{meta.phase === 'gameOver' ? 'Game over' : 'Round over'}</h2>
-        <p className="mt-1 text-[#f4c430]">{winner ? `${winner.name} wins!` : 'Winner decided'}</p>
+        <h2 className="text-2xl font-black">{meta.phase === 'gameOver' ? STRINGS.roundEnd.gameOver : STRINGS.roundEnd.roundOver}</h2>
+        <p className="mt-1 text-uno-yellow">{winner ? `${winner.name} wins!` : STRINGS.roundEnd.winnerDecided}</p>
         <ul className="mt-4 space-y-1 text-left text-sm">
           {standings.map((s) => (
             <li key={s.id} className="flex justify-between rounded border bg-background px-3 py-1.5">
@@ -38,10 +39,10 @@ export function RoundEndDialog({ roomId, meta, seats, winnerId }: RoundEndDialog
         <div className="mt-5 flex justify-center gap-2">
           {meta.phase === 'roundEnd' && isHost && (
             <Button disabled={busy} onClick={async () => { setBusy(true); try { await callNextRound({ roomId }); } finally { setBusy(false); } }}>
-              Next round
+              {STRINGS.roundEnd.nextRound}
             </Button>
           )}
-          <Link href="/" className={buttonVariants({ variant: 'outline' })}>Back to home</Link>
+          <Link href="/" className={buttonVariants({ variant: 'outline' })}>{STRINGS.common.backToHome}</Link>
         </div>
       </div>
     </div>

@@ -18,8 +18,9 @@ import { ChatPanel } from './ChatPanel';
 import { ConnectionBanner } from './ConnectionBanner';
 import { RoundEndDialog } from './RoundEndDialog';
 import { LeaveRoomButton } from '@/components/lobby/LeaveRoomButton';
+import { CARD_COLORS, TIMING, STRINGS } from '@/lib/constants';
 
-const COLORS: CardColor[] = ['red', 'green', 'blue', 'yellow'];
+const WILD_COLORS: CardColor[] = ['red', 'green', 'blue', 'yellow'];
 const TARGETED = new Set<CardKind>(['duel', 'eye', 'swap', 'steal', 'gift']);
 const needsColor = (k: CardKind) => k === 'wild' || k === 'drawUntilColor' || k === 'duel' || k === 'bomb';
 
@@ -48,13 +49,13 @@ export function GameTable({ roomId }: { roomId: string }) {
     if (presence[pub.turnId]?.online === false) return;
     const key = `${pub.turnId}:${pub.turnDeadline}`;
     const isMe = pub.turnId === (user?.uid ?? '');
-    if (serverNow >= pub.turnDeadline + (isMe ? 0 : 2000) && firedRef.current !== key) {
+    if (serverNow >= pub.turnDeadline + (isMe ? 0 : TIMING.timeoutBackupMs) && firedRef.current !== key) {
       firedRef.current = key;
       callForceTimeout({ roomId }).catch(() => {});
     }
   }, [serverNow, pub?.turnDeadline, pub?.turnId, meta, presence, user?.uid, roomId]);
 
-  if (!pub || !meta) return <div className="p-10 text-center text-muted-foreground">Dealing...</div>;
+  if (!pub || !meta) return <div className="p-10 text-center text-muted-foreground">{STRINGS.game.dealing}</div>;
 
   const timerSecs = pub.turnDeadline && ['playing', 'duel', 'bombResponse'].includes(meta.phase)
     ? Math.max(0, Math.ceil((pub.turnDeadline - serverNow) / 1000)) : null;
@@ -120,7 +121,7 @@ export function GameTable({ roomId }: { roomId: string }) {
             </span>
             {pub.colorLocked && <span className="rounded bg-muted px-2 py-0.5 text-xs">color-locked</span>}
             {timerSecs !== null && (
-              <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${timerSecs <= 3 ? 'bg-[#e63946] text-white' : 'bg-muted'}`} aria-label={`${timerSecs} seconds left`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${timerSecs <= TIMING.timerWarnSeconds ? 'bg-uno-red text-white' : 'bg-muted'}`} aria-label={`${timerSecs} seconds left`}>
                 {timerSecs}s
               </span>
             )}
@@ -134,16 +135,16 @@ export function GameTable({ roomId }: { roomId: string }) {
           {seats.filter((s) => s.id !== myId && !s.isAudience).map((s) => {
             const offline = !s.isBot && s.status === 'active' && presence[s.id]?.online === false;
             const reconnectLeft = offline && presence[s.id]?.lastSeen
-              ? Math.max(0, 30 - Math.floor((serverNow - presence[s.id].lastSeen) / 1000)) : null;
+              ? Math.max(0, TIMING.reconnectSeconds - Math.floor((serverNow - presence[s.id].lastSeen) / 1000)) : null;
             return (
-              <div key={s.id} className={`rounded-lg border px-3 py-2 text-sm ${s.turn ? 'border-[#f4c430] ring-2 ring-[#f4c430]/40' : 'bg-card'} ${offline ? 'opacity-60' : ''}`}>
+              <div key={s.id} className={`rounded-lg border px-3 py-2 text-sm ${s.turn ? 'border-uno-yellow ring-2 ring-uno-yellow/40' : 'bg-card'} ${offline ? 'opacity-60' : ''}`}>
                 <div className="font-semibold">{s.name}{s.isBot ? ' 🤖' : ''}</div>
                 <div className="text-xs text-muted-foreground">
                   {s.status === 'out' ? <span className="font-bold text-destructive">AUDIENCE</span> : `${s.handCount} cards`}
                   {s.status === 'active' && s.handCount === 1 && ' • 1 card!'}
                 </div>
                 {offline && (
-                  <div className="text-xs font-semibold text-[#e63946]">
+                  <div className="text-xs font-semibold text-uno-red">
                     disconnected{reconnectLeft !== null ? ` - ${reconnectLeft}s` : ''}
                   </div>
                 )}
@@ -163,19 +164,19 @@ export function GameTable({ roomId }: { roomId: string }) {
         )}
 
         {/* Center */}
-        <div className="flex items-center justify-center gap-8 rounded-2xl border bg-[#0c5c3c] p-8">
+        <div className="flex items-center justify-center gap-8 rounded-2xl border bg-uno-table p-8">
           <button
             type="button"
             disabled={!myTurn || eliminated}
             onClick={() => submit({ type: 'draw', playerId: myId })}
             aria-label={pub.pending ? `draw ${pub.pending.total}` : 'draw a card'}
-            className="flex h-24 w-16 items-center justify-center rounded-xl border-4 border-white bg-[#15161c] font-bold text-white disabled:opacity-60"
+            className="flex h-24 w-16 items-center justify-center rounded-xl border-4 border-white bg-uno-black font-bold text-white disabled:opacity-60"
           >
-            DRAW
+            {STRINGS.game.draw}
           </button>
           <div className="flex flex-col items-center gap-1">
             <UnoCard card={pub.discardTop} onInspect={() => setInspect(pub.discardTop)} />
-            <span className="text-xs text-white/80">{pub.drawCount} in deck</span>
+            <span className="text-xs text-white/80">{pub.drawCount} {STRINGS.game.deckSuffix}</span>
           </div>
           {pub.pending && (
             <div className="rounded-lg bg-black/40 px-3 py-2 text-center text-white">
@@ -187,12 +188,12 @@ export function GameTable({ roomId }: { roomId: string }) {
 
         {/* Duel banner */}
         {pub.phase === 'duel' && pub.duel && (
-          <div className="rounded-lg bg-[#e63946]/15 px-4 py-2 text-center text-sm font-semibold text-[#e63946]">
+          <div className="rounded-lg bg-uno-red/15 px-4 py-2 text-center text-sm font-semibold text-uno-red">
             ⚔ Duel: {seatName(seats, pub.duel.challengerId)} vs {seatName(seats, pub.duel.opponentId)} — {seatName(seats, pub.turnId)}&apos;s move
           </div>
         )}
         {pub.phase === 'bombResponse' && (
-          <div className="rounded-lg bg-[#15161c] px-4 py-2 text-center text-sm font-semibold text-white">
+          <div className="rounded-lg bg-uno-black px-4 py-2 text-center text-sm font-semibold text-white">
             💣 Bomb! {pub.turnId === myId ? 'Your response' : `Waiting for ${seatName(seats, pub.turnId)}`}
           </div>
         )}
@@ -202,21 +203,21 @@ export function GameTable({ roomId }: { roomId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             {pub.phase === 'bombResponse' ? (
               <>
-                <Button onClick={() => submit({ type: 'draw', playerId: myId })}>Accept (draw 4)</Button>
-                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>Shield</Button>}
-                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>Counter</Button>}
+                <Button onClick={() => submit({ type: 'draw', playerId: myId })}>{STRINGS.game.accept}</Button>
+                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>{STRINGS.game.shield}</Button>}
+                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>{STRINGS.game.counter}</Button>}
               </>
             ) : pub.pending ? (
               <>
                 <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>Draw {pub.pending.total}</Button>
-                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>Shield</Button>}
-                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>Counter</Button>}
-                {selected.length > 0 && <Button onClick={tryPlay}>Play selected</Button>}
+                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>{STRINGS.game.shield}</Button>}
+                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>{STRINGS.game.counter}</Button>}
+                {selected.length > 0 && <Button onClick={tryPlay}>{STRINGS.game.playSelected}</Button>}
               </>
             ) : (
               <>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>Play selected</Button>
-                {selected.length === 0 && <span className="text-sm text-muted-foreground">Tap a card below to select, then Play.</span>}
+                <Button disabled={selected.length === 0} onClick={tryPlay}>{STRINGS.game.playSelected}</Button>
+                {selected.length === 0 && <span className="text-sm text-muted-foreground">{STRINGS.game.selectHint}</span>}
               </>
             )}
           </div>
@@ -226,14 +227,14 @@ export function GameTable({ roomId }: { roomId: string }) {
             Waiting for <span className="font-semibold text-foreground">{seatName(seats, pub.turnId)}</span> to play...
           </p>
         )}
-        {eliminated && <p className="text-sm font-semibold text-destructive">You are in the audience - watch &amp; chat.</p>}
+        {eliminated && <p className="text-sm font-semibold text-destructive">{STRINGS.game.inAudience}</p>}
 
         {/* Hand (hidden for spectators) */}
         {iAmAudience ? (
-          <p className="rounded-lg border bg-card p-3 text-sm font-semibold text-muted-foreground">You are spectating - watch &amp; chat.</p>
+          <p className="rounded-lg border bg-card p-3 text-sm font-semibold text-muted-foreground">{STRINGS.game.spectatingHand}</p>
         ) : (
           <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-3">
-            {hand.length === 0 && <span className="text-sm text-muted-foreground">No cards.</span>}
+            {hand.length === 0 && <span className="text-sm text-muted-foreground">{STRINGS.game.noCards}</span>}
             {hand.map((c) => (
               <UnoCard
                 key={c.id}
@@ -256,7 +257,7 @@ export function GameTable({ roomId }: { roomId: string }) {
         <Overlay onClose={() => setDraft(null)}>
           {needsColor(draft.lead.kind) && !draft.chosenColor && (
             <Picker title="Choose a color">
-              {COLORS.map((c) => (
+              {WILD_COLORS.map((c) => (
                 <Button key={c} className="capitalize text-white" style={{ backgroundColor: colorHex(c) }} onClick={() => finalizeDraft({ chosenColor: c })}>{c}</Button>
               ))}
             </Picker>
@@ -287,7 +288,7 @@ export function GameTable({ roomId }: { roomId: string }) {
             <div className="mb-3 flex justify-center"><UnoCard card={inspect} /></div>
             <h3 className="font-bold">{cardInfo(inspect).name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{cardInfo(inspect).effect}</p>
-            <Button className="mt-4" onClick={() => setInspect(null)}>Close</Button>
+            <Button className="mt-4" onClick={() => setInspect(null)}>{STRINGS.game.close}</Button>
           </div>
         </Overlay>
       )}
@@ -308,7 +309,7 @@ export function GameTable({ roomId }: { roomId: string }) {
 }
 
 function colorHex(c: CardColor): string {
-  return { red: '#e63946', green: '#2a9d4a', blue: '#2b6cb0', yellow: '#f4c430', black: '#15161c' }[c];
+  return CARD_COLORS[c];
 }
 function seatName(seats: { id: string; name: string }[], id: string): string {
   return seats.find((s) => s.id === id)?.name ?? id;

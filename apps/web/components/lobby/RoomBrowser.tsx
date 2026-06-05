@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useLobbies } from '@/lib/hooks/useLobbies';
 import { callJoinRoom } from '@/lib/functions';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { STRINGS } from '@/lib/constants';
 
 export function RoomBrowser() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function RoomBrowser() {
   const join = async (code: string, role: 'player' | 'audience') => {
     setBusy(code);
     try {
-      await callJoinRoom({ code, name: nickname || 'Player', role });
+      await callJoinRoom({ code, name: nickname || STRINGS.createJoin.nicknamePlaceholder, role });
       router.push(`/play?room=${code}`);
     } catch {
       setBusy('');
@@ -26,15 +27,15 @@ export function RoomBrowser() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-6 py-10">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-black">Open rooms</h1>
-        <Link href="/play?create=1" className={buttonVariants({ variant: 'outline', size: 'sm' })}>Create a room</Link>
+        <h1 className="text-2xl font-black">{STRINGS.browser.title}</h1>
+        <Link href="/play?create=1" className={buttonVariants({ variant: 'outline', size: 'sm' })}>{STRINGS.browser.createRoom}</Link>
       </div>
 
-      {loading && <p className="text-muted-foreground">Loading rooms...</p>}
+      {loading && <p className="text-muted-foreground">{STRINGS.browser.loading}</p>}
 
       {!loading && rooms.length === 0 && (
         <div className="rounded-xl border border-dashed bg-card p-8 text-center text-muted-foreground">
-          No open rooms right now. <Link href="/play?create=1" className="font-semibold text-foreground underline">Create one</Link>.
+          {STRINGS.browser.emptyPrefix}<Link href="/play?create=1" className="font-semibold text-foreground underline">{STRINGS.browser.emptyLink}</Link>.
         </div>
       )}
 
@@ -45,10 +46,10 @@ export function RoomBrowser() {
           return (
             <li key={r.code} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
               <div>
-                <p className="flex items-center gap-2 text-lg font-black tracking-[0.2em] text-[#f4c430]">
+                <p className="flex items-center gap-2 text-lg font-black tracking-[0.2em] text-uno-yellow">
                   {r.code}
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-normal ${inGame ? 'bg-[#e63946]/15 text-[#e63946]' : 'bg-muted text-muted-foreground'}`}>
-                    {inGame ? 'In game' : 'In lobby'}
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-normal ${inGame ? 'bg-uno-red/15 text-uno-red' : 'bg-muted text-muted-foreground'}`}>
+                    {inGame ? STRINGS.browser.inGame : STRINGS.browser.inLobby}
                   </span>
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -56,11 +57,11 @@ export function RoomBrowser() {
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button disabled={!ready || full || busy === r.code} onClick={() => join(r.code, 'player')} title={full ? 'Room is full' : undefined}>
-                  {busy === r.code ? '...' : 'Play'}
+                <Button disabled={!ready || full || busy === r.code} onClick={() => join(r.code, 'player')} title={full ? STRINGS.browser.roomFull : undefined}>
+                  {busy === r.code ? '...' : STRINGS.browser.play}
                 </Button>
                 <Button variant="outline" disabled={!ready || busy === r.code} onClick={() => join(r.code, 'audience')}>
-                  Watch
+                  {STRINGS.browser.watch}
                 </Button>
               </div>
             </li>

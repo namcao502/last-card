@@ -1,12 +1,9 @@
 'use client';
 import { useRef } from 'react';
-import type { Card, CardColor, CardKind } from '@uno/engine';
+import type { Card, CardKind } from '@uno/engine';
 import { cn } from '@/lib/utils';
 import { cardInfo } from '@/lib/card-info';
-
-const COLOR_BG: Record<CardColor, string> = {
-  red: '#e63946', green: '#2a9d4a', blue: '#2b6cb0', yellow: '#f4c430', black: '#15161c',
-};
+import { CARD_COLORS, COLORS, TIMING } from '@/lib/constants';
 
 const GLYPH: Partial<Record<CardKind, string>> = {
   mult: 'x2', div: '÷2', skip: '⊘', playAgain: '↻', minus: '−',
@@ -62,10 +59,10 @@ export function UnoCard({ card, selected, playable, dimmed, small, onClick, onIn
     'relative flex items-center justify-center rounded-xl border-4 border-white font-extrabold text-white shadow-lg transition-transform',
     small ? 'h-14 w-10 text-sm' : 'h-24 w-16',
     dimmed && 'brightness-50 saturate-50',
-    selected && '-translate-y-4 outline outline-2 outline-[#f4c430]',
-    playable && !selected && '-translate-y-2 ring-2 ring-[#f4c430]/70',
+    selected && '-translate-y-4 outline outline-2 outline-uno-yellow',
+    playable && !selected && '-translate-y-2 ring-2 ring-uno-yellow/70',
   );
-  const style = { backgroundColor: COLOR_BG[card.color], color: card.color === 'yellow' ? '#1a1500' : '#fff' };
+  const style = { backgroundColor: CARD_COLORS[card.color], color: card.color === 'yellow' ? COLORS.ink : COLORS.white };
 
   // Long-press to inspect, without interfering with tap-to-select.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,7 +70,7 @@ export function UnoCard({ card, selected, playable, dimmed, small, onClick, onIn
   const startPress = () => {
     if (!onInspect) return;
     longPressed.current = false;
-    timer.current = setTimeout(() => { longPressed.current = true; onInspect(); }, 400);
+    timer.current = setTimeout(() => { longPressed.current = true; onInspect(); }, TIMING.longPressMs);
   };
   const endPress = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
 
@@ -87,7 +84,7 @@ export function UnoCard({ card, selected, playable, dimmed, small, onClick, onIn
         onPointerLeave={endPress}
         onContextMenu={(e) => { if (onInspect) { e.preventDefault(); onInspect(); } }}
         aria-label={cardLabel(card)}
-        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-[#f4c430]')}
+        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-uno-yellow')}
         style={style}
       >
         {content}

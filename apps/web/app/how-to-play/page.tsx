@@ -20,7 +20,7 @@ export default function HowToPlay() {
           <li><strong>You cannot finish on a black card</strong>, and anyone whose hand passes 30 cards is knocked out into the audience.</li>
           <li><strong>First to empty their hand wins</strong> (or the last player standing).</li>
         </ol>
-        <p><Link href="/rules" className="font-semibold text-[#f4c430] hover:underline">See the full house rules &rarr;</Link></p>
+        <p><Link href="/rules" className="font-semibold text-uno-yellow hover:underline">See the full house rules &rarr;</Link></p>
       </article>
     </main>
   );

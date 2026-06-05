@@ -126,9 +126,7 @@ export const STRINGS = {
   },
   roundEnd: {
     gameOver: 'Game over',
-    roundOver: 'Round over',
     winnerDecided: 'Winner decided',
-    nextRound: 'Next round',
   },
   chat: {
     title: 'Room chat',

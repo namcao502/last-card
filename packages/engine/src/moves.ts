@@ -339,7 +339,7 @@ export function seatPlayer(state: GameState, seed: PlayerSeed): GameState {
     }
     return s;
   }
-  const p: PlayerState = { id: seed.id, name: seed.name, isBot: seed.isBot, connected: true, status: 'active', hand: [], score: 0 };
+  const p: PlayerState = { id: seed.id, name: seed.name, isBot: seed.isBot, connected: true, status: 'active', hand: [] };
   s.players.push(p);
   drawCards(s, p, s.config.startingHandSize);
   s.log = `${seed.name} joined the game`;

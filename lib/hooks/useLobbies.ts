@@ -11,7 +11,7 @@ export interface LobbyRoom {
   createdAt: number;
   deckTotal: number;
   startingHandSize: number;
-  phase?: 'lobby' | 'playing' | 'duel' | 'bombResponse' | 'roundEnd';
+  phase?: 'lobby' | 'playing' | 'duel' | 'bombResponse';
 }
 
 /** Subscribe to the public room index; returns rooms (lobby + in-progress), newest first. */

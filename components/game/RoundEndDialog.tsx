@@ -1,32 +1,25 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
 import type { RoomMeta, SeatRow } from '@/lib/hooks/useRoom';
-import { useAuth } from '@/lib/auth';
-import { callNextRound } from '@/lib/functions';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { STRINGS } from '@/lib/constants';
 
 interface RoundEndDialogProps {
-  roomId: string;
   meta: RoomMeta;
   seats: SeatRow[];
   winnerId: string | null;
 }
 
-export function RoundEndDialog({ roomId, meta, seats, winnerId }: RoundEndDialogProps) {
-  const { user } = useAuth();
-  const [busy, setBusy] = useState(false);
-  if (meta.phase !== 'gameOver' && meta.phase !== 'roundEnd') return null;
+export function RoundEndDialog({ meta, seats, winnerId }: RoundEndDialogProps) {
+  if (meta.phase !== 'gameOver') return null;
 
   const winner = seats.find((s) => s.id === winnerId);
-  const isHost = user?.uid === meta.hostId;
   const standings = [...seats].sort((a, b) => a.handCount - b.handCount);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
-        <h2 className="text-2xl font-black">{meta.phase === 'gameOver' ? STRINGS.roundEnd.gameOver : STRINGS.roundEnd.roundOver}</h2>
+        <h2 className="text-2xl font-black">{STRINGS.roundEnd.gameOver}</h2>
         <p className="mt-1 text-uno-yellow">{winner ? `${winner.name} wins!` : STRINGS.roundEnd.winnerDecided}</p>
         <ul className="mt-4 space-y-1 text-left text-sm">
           {standings.map((s) => (
@@ -36,12 +29,7 @@ export function RoundEndDialog({ roomId, meta, seats, winnerId }: RoundEndDialog
             </li>
           ))}
         </ul>
-        <div className="mt-5 flex justify-center gap-2">
-          {meta.phase === 'roundEnd' && isHost && (
-            <Button disabled={busy} onClick={async () => { setBusy(true); try { await callNextRound({ roomId }); } finally { setBusy(false); } }}>
-              {STRINGS.roundEnd.nextRound}
-            </Button>
-          )}
+        <div className="mt-5 flex justify-center">
           <Link href="/" className={buttonVariants({ variant: 'outline' })}>{STRINGS.common.backToHome}</Link>
         </div>
       </div>

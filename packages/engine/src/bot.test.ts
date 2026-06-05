@@ -8,8 +8,8 @@ import type { Card } from './cards';
 const C = (over: Partial<Card>): Card => ({ id: 'x', color: 'red', kind: 'number', value: 1, ...over });
 function mk(over: Partial<GameState>, hand: Card[]): GameState {
   const players: PlayerState[] = [
-    { id: 'b1', name: 'Bot', isBot: true, connected: true, status: 'active', hand, score: 0 },
-    { id: 'p2', name: 'Human', isBot: false, connected: true, status: 'active', hand: [C({ id: 'h', value: 1 }), C({ id: 'h2', value: 2 })], score: 0 },
+    { id: 'b1', name: 'Bot', isBot: true, connected: true, status: 'active', hand },
+    { id: 'p2', name: 'Human', isBot: false, connected: true, status: 'active', hand: [C({ id: 'h', value: 1 }), C({ id: 'h2', value: 2 })] },
   ];
   return {
     phase: 'playing', config: DEFAULT_CONFIG, players,

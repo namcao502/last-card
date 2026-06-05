@@ -2,14 +2,14 @@ import { buildDeck, type Card, type CardColor } from './cards';
 import type { RuleConfig } from './config';
 import { createRng, shuffle } from './rng';
 
-export type GamePhase = 'playing' | 'duel' | 'bombResponse' | 'roundEnd' | 'gameOver';
+export type GamePhase = 'playing' | 'duel' | 'bombResponse' | 'gameOver';
 export const MAX_HAND = 30;                        // hand.length > 30 -> eliminated (RD20)
 
 export interface PlayerSeed { id: string; name: string; isBot: boolean }
 export interface PlayerState {
   id: string; name: string; isBot: boolean; connected: boolean;
   status: 'active' | 'out';
-  hand: Card[]; score: number;
+  hand: Card[];
 }
 export interface PendingDraw { total: number; topValue: number; source: 'colorDraw' | 'blackDraw' }
 export interface DuelState { challengerId: string; opponentId: string; activeId: string }
@@ -41,7 +41,7 @@ export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string
     throw new Error(`Cannot deal ${config.startingHandSize} to ${seeds.length} players from a ${deck.length}-card deck`);
 
   const players: PlayerState[] = seeds.map(s => ({
-    id: s.id, name: s.name, isBot: s.isBot, connected: true, status: 'active', hand: [], score: 0,
+    id: s.id, name: s.name, isBot: s.isBot, connected: true, status: 'active', hand: [],
   }));
   let idx = 0;
   for (let r = 0; r < config.startingHandSize; r++)
@@ -76,17 +76,4 @@ export function nextActiveIndex(s: GameState, from: number, steps: number): numb
     if (activePlayers(s).length === 0) break; // safety
   }
   return i;
-}
-
-/** Begin a fresh round, preserving scores and resetting status. Used only in points mode. */
-export function startNextRound(prev: GameState): GameState {
-  return nextRoundWith(prev, prev.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
-}
-
-/** Begin a fresh round from an EXPLICIT seed list (so audience / departed players
- *  are excluded and mid-game joiners carry over), preserving scores by id. */
-export function nextRoundWith(prev: GameState, seeds: PlayerSeed[]): GameState {
-  const next = createGame(seeds, prev.config, prev.seed + ':r' + prev.discardPile.length);
-  next.players.forEach((p) => { p.score = prev.players.find(x => x.id === p.id)?.score ?? 0; });
-  return next;
 }

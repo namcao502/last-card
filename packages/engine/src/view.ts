@@ -3,7 +3,7 @@ import type { GameState, GamePhase, PendingDraw, DuelState, BombResponse } from 
 
 export interface PublicPlayer {
   id: string; name: string; isBot: boolean; connected: boolean;
-  status: 'active' | 'out'; handCount: number; score: number;
+  status: 'active' | 'out'; handCount: number;
 }
 export interface PublicView {
   phase: GamePhase;
@@ -32,7 +32,7 @@ export function redactFor(state: GameState, viewerId: string | null): PublicView
     phase: state.phase,
     players: state.players.map(p => ({
       id: p.id, name: p.name, isBot: p.isBot, connected: p.connected,
-      status: p.status, handCount: p.hand.length, score: p.score,
+      status: p.status, handCount: p.hand.length,
     })),
     discardTop: state.discardPile[state.discardPile.length - 1],
     currentColor: state.currentColor,

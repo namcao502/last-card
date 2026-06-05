@@ -19,8 +19,8 @@ describe('isPlayable', () => {
 
 function mk(over: Partial<GameState>, hand: Card[]): GameState {
   const players: PlayerState[] = [
-    { id: 'p1', name: 'A', isBot: false, connected: true, status: 'active', hand, score: 0 },
-    { id: 'p2', name: 'B', isBot: false, connected: true, status: 'active', hand: [cardOf({ id: 'z' })], score: 0 },
+    { id: 'p1', name: 'A', isBot: false, connected: true, status: 'active', hand },
+    { id: 'p2', name: 'B', isBot: false, connected: true, status: 'active', hand: [cardOf({ id: 'z' })] },
   ];
   return { ...createGame([{ id: 'p1', name: 'A', isBot: false }, { id: 'p2', name: 'B', isBot: false }], DEFAULT_CONFIG, 's'),
     players, discardPile: [top], currentColor: 'red', pending: null, ...over };

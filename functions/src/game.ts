@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import {
-  createGame, applyMove, isMoveLegal, redactFor, nextRoundWith, topCard,
+  createGame, applyMove, isMoveLegal, redactFor, topCard,
   type GameState, type Move,
 } from '@uno/engine';
 import { db } from './firebase.js';
@@ -31,7 +31,6 @@ function projection(state: GameState): Record<string, unknown> {
   for (const p of state.players) {
     updates[`seats/${p.id}/handCount`] = p.hand.length;
     updates[`seats/${p.id}/status`] = p.status;
-    updates[`seats/${p.id}/score`] = p.score;
     updates[`seats/${p.id}/turn`] = pub.turnId === p.id;
   }
   return updates;
@@ -145,25 +144,6 @@ export const submitMove = onCall(async (req) => {
     const t = result.players.find(p => p.id === eyeTarget);
     if (t) await db.ref(`peek/${roomId}/${uid}`).set(sanitize({ targetId: eyeTarget, cards: t.hand, ts: Date.now() }));
   }
-  return { ok: true };
-});
-
-export const nextRound = onCall(async (req) => {
-  requireHuman(req.auth);
-  const roomId = String(req.data?.roomId ?? '');
-  // Reseat the next round from the room's CURRENT non-audience seats, so players
-  // who left are dropped, spectators stay out, and mid-game joiners carry over.
-  const seats = (await db.ref(`rooms/${roomId}/seats`).get()).val() ?? {};
-  const seeds = Object.entries(seats)
-    .map(([id, v]) => ({ id, ...(v as { name: string; isBot: boolean; isAudience?: boolean }) }))
-    .filter((s) => !s.isAudience)
-    .map((s) => ({ id: s.id, name: s.name, isBot: s.isBot }));
-  let reason = 'Round not over';
-  const result = await applyAuthoritative(roomId, (state) => {
-    if (state.phase !== 'roundEnd') { reason = 'Round not over'; return undefined; }
-    return nextRoundWith(state, seeds);
-  });
-  if (!result) throw new HttpsError('failed-precondition', reason);
   return { ok: true };
 });
 

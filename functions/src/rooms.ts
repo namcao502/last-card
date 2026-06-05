@@ -11,7 +11,7 @@ function genCode(): string {
   return Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('');
 }
 
-type SeatMap = Record<string, { isAudience?: boolean; seatIndex?: number; status?: string; score?: number; handCount?: number }>;
+type SeatMap = Record<string, { isAudience?: boolean; seatIndex?: number; status?: string; handCount?: number }>;
 
 /** Count only active-eligible (non-audience) seats - the figure capped by maxPlayers. */
 function playerSeatCount(seats: SeatMap): number {
@@ -84,7 +84,7 @@ export const createRoom = onCall(async (req) => {
   await db.ref(`rooms/${roomId}`).update({
     [`members/${uid}`]: true,
     [`participants/${uid}`]: { playerEntries: 1 }, // host's initial stint
-    [`seats/${uid}`]: { name, isBot: false, seatIndex: 0, isAudience: false, connected: true, handCount: 0, status: 'active', score: 0, turn: false },
+    [`seats/${uid}`]: { name, isBot: false, seatIndex: 0, isAudience: false, connected: true, handCount: 0, status: 'active', turn: false },
   });
 
   // Publish to the browse index (non-sensitive fields only).
@@ -116,7 +116,7 @@ export const joinRoom = onCall(async (req) => {
     const seatIndex = existing?.seatIndex ?? await claimSeatIndex(roomId);
     await db.ref(`rooms/${roomId}`).update({
       [`members/${uid}`]: true,
-      [`seats/${uid}`]: { name, isBot: false, seatIndex, isAudience: true, connected: true, handCount: 0, status: 'out', score: existing?.score ?? 0, turn: false },
+      [`seats/${uid}`]: { name, isBot: false, seatIndex, isAudience: true, connected: true, handCount: 0, status: 'out', turn: false },
     });
     await db.ref(`hands/${roomId}/${uid}`).remove();
     await syncLobby(roomId);
@@ -135,7 +135,7 @@ export const joinRoom = onCall(async (req) => {
   // then projects the correct hand count / status / turn over the top.
   await db.ref(`rooms/${roomId}`).update({
     [`members/${uid}`]: true,
-    [`seats/${uid}`]: { name, isBot: false, seatIndex, isAudience: false, connected: true, handCount: 0, status: 'active', score: existing?.score ?? 0, turn: false },
+    [`seats/${uid}`]: { name, isBot: false, seatIndex, isAudience: false, connected: true, handCount: 0, status: 'active', turn: false },
   });
   if (live) await applyAuthoritative(roomId, (s) => seatPlayer(s, { id: uid, name, isBot: false }));
   await syncLobby(roomId);
@@ -158,7 +158,7 @@ export const addBot = onCall(async (req) => {
   const botNames = ['Aria', 'Rex', 'Mia', 'Leo', 'Zoe', 'Max', 'Ivy', 'Sam'];
   await db.ref(`rooms/${roomId}/seats/${botId}`).set({
     name: `Bot ${botNames[seatIndex % botNames.length]}`, isBot: true, seatIndex, isAudience: false,
-    connected: true, handCount: 0, status: 'active', score: 0, turn: false,
+    connected: true, handCount: 0, status: 'active', turn: false,
   });
   await syncLobby(roomId);
   return { botId };

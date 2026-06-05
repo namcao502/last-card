@@ -110,7 +110,7 @@ export function GameTable({ roomId }: { roomId: string }) {
     <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_300px]">
       <div className="space-y-4">
         <ConnectionBanner eliminated={!!eliminated} />
-        <RoundEndDialog roomId={roomId} meta={meta} seats={seats} winnerId={pub.winnerId} />
+        <RoundEndDialog meta={meta} seats={seats} winnerId={pub.winnerId} />
 
         {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2 text-sm">

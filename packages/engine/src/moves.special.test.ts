@@ -8,7 +8,7 @@ const C = (over: Partial<Card>): Card => ({ id: 'x', color: 'red', kind: 'number
 function mk(over: Partial<GameState>, hands: Card[][]): GameState {
   const players: PlayerState[] = ['p1', 'p2', 'p3'].map((id, i) => ({
     id, name: id, isBot: false, connected: true, status: 'active',
-    hand: hands[i]?.length ? hands[i] : [C({ id: `pad${i}`, color: 'blue', value: 1 }), C({ id: `pq${i}`, color: 'blue', value: 2 })], score: 0,
+    hand: hands[i]?.length ? hands[i] : [C({ id: `pad${i}`, color: 'blue', value: 1 }), C({ id: `pq${i}`, color: 'blue', value: 2 })],
   }));
   return {
     phase: 'playing', config: DEFAULT_CONFIG, players,

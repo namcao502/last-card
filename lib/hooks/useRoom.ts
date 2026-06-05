@@ -4,8 +4,8 @@ import { onValue, ref } from 'firebase/database';
 import { rtdb } from '../firebase';
 import type { PublicView } from '@uno/engine';
 
-export interface SeatRow { id: string; name: string; isBot: boolean; seatIndex: number; connected: boolean; handCount: number; status: 'active' | 'out'; score: number; turn: boolean; isAudience?: boolean }
-export interface RoomMeta { code: string; hostId: string; phase: 'lobby' | 'playing' | 'duel' | 'bombResponse' | 'roundEnd' | 'gameOver'; maxPlayers: number; config: import('@uno/engine').RuleConfig }
+export interface SeatRow { id: string; name: string; isBot: boolean; seatIndex: number; connected: boolean; handCount: number; status: 'active' | 'out'; turn: boolean; isAudience?: boolean }
+export interface RoomMeta { code: string; hostId: string; phase: 'lobby' | 'playing' | 'duel' | 'bombResponse' | 'gameOver'; maxPlayers: number; config: import('@uno/engine').RuleConfig }
 // Adds the server-set turn-timer deadline to the redacted public view.
 export type PublicState = Omit<PublicView, 'players' | 'you'> & { turnDeadline?: number | null };
 export interface PresenceInfo { online: boolean; lastSeen: number }

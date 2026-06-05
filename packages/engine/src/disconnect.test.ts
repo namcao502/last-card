@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createGame, nextRoundWith } from './state';
+import { createGame } from './state';
 import { skipTurn, forfeit, seatPlayer } from './moves';
 import { DEFAULT_CONFIG } from './config';
 
@@ -77,19 +77,5 @@ describe('seatPlayer', () => {
     expect(out.players[1].status).toBe('out');
     const back = seatPlayer(out, { id: 'p1', name: 'P1', isBot: false });
     expect(back.players[1].status).toBe('active');
-  });
-});
-
-describe('nextRoundWith', () => {
-  it('seeds only the given players and carries scores by id', () => {
-    const g = createGame(seeds(3), DEFAULT_CONFIG, 'seed-nr');
-    g.players[0].score = 12; g.players[2].score = 7;
-    const next = nextRoundWith(g, [
-      { id: 'p0', name: 'P0', isBot: false },
-      { id: 'p2', name: 'P2', isBot: false },
-    ]);
-    expect(next.players.map((p) => p.id)).toEqual(['p0', 'p2']); // p1 dropped (e.g. audience)
-    expect(next.players.find((p) => p.id === 'p0')!.score).toBe(12);
-    expect(next.players.find((p) => p.id === 'p2')!.score).toBe(7);
   });
 });

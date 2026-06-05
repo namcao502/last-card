@@ -2,11 +2,12 @@ runConfig:
   cpu: 1
   memoryMiB: 512
   maxInstances: 2
-# npm-workspace monorepo: build/run from the repo root so @uno/engine resolves.
-# (App Hosting runs these from /workspace regardless of the backend root directory.)
+# npm-workspace monorepo: build/run the web app by directory (--prefix) rather than
+# the workspace flag (-w), which App Hosting's build env does not resolve. The root
+# install still links @uno/engine into node_modules, so next build finds it.
 scripts:
-  buildCommand: npm run build:web
-  runCommand: npm run start -w apps/web
+  buildCommand: npm --prefix apps/web run build
+  runCommand: npm --prefix apps/web run start
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: "AIzaSyAzpD2DcBWZh2DbQoFEPLZZR9UDu7N2MVI"

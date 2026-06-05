@@ -13,7 +13,7 @@ describe('Infinity config', () => {
     const merged = mergeConfig({ startingHandSize: 8 });
     expect(merged.startingHandSize).toBe(8);
     expect(merged.deck.duel).toBe(DEFAULT_DECK.duel);
-    expect(merged.win.condition).toBe('firstToEmpty');
+    expect(merged.maxPlayers).toBe(DEFAULT_CONFIG.maxPlayers);
   });
   it('rejects out-of-range hand size', () => {
     expect(ruleConfigSchema.safeParse({ ...DEFAULT_CONFIG, startingHandSize: 99 }).success).toBe(false);

@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, deckTotal, type RuleConfig } from '@uno/engine';
 import { CONFIG_FIELDS, getPath, setPath, type ConfigField } from '@/lib/config-fields';
 import { Button } from '@/components/ui/button';
 
-const GROUPS = ['Table', 'Win', 'Colored cards', 'Black draws', 'Math & defense', 'Special cards', 'Targeted cards'] as const;
+const GROUPS = ['Table', 'Colored cards', 'Black draws', 'Math & defense', 'Special cards', 'Targeted cards'] as const;
 
 const LITE: RuleConfig = setPath(DEFAULT_CONFIG, 'deck', {
   ...DEFAULT_CONFIG.deck, duel: 1, bomb: 1, eye: 1, swap: 1, steal: 1, gift: 1, reverseDraw4: 1, reverseDraw10: 1, recycle: 2,

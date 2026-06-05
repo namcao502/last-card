@@ -21,11 +21,11 @@ export function deckTotal(d: DeckCounts): number {
   return colored + black;
 }
 
+// Win condition is fixed: empty your hand (or be the last player standing).
 export const ruleConfigSchema = z.object({
   version: z.literal(1),
   startingHandSize: z.number().int().min(1).max(15),
   maxPlayers: z.number().int().min(2).max(10),
-  win: z.object({ condition: z.enum(['firstToEmpty', 'pointsTarget']), pointsTarget: z.number().int().min(50).max(2000) }),
   deck: deckCountsSchema,
 }).refine(
   (c) => c.startingHandSize * c.maxPlayers + 1 <= deckTotal(c.deck),
@@ -38,7 +38,6 @@ export const DEFAULT_CONFIG: RuleConfig = {
   version: 1,
   startingHandSize: 7,
   maxPlayers: 6,
-  win: { condition: 'firstToEmpty', pointsTarget: 500 },
   deck: DEFAULT_DECK,
 };
 
@@ -51,7 +50,6 @@ export function mergeConfig(patch: DeepPartial<RuleConfig>): RuleConfig {
     version: 1 as const,
     startingHandSize: patch.startingHandSize ?? d.startingHandSize,
     maxPlayers: patch.maxPlayers ?? d.maxPlayers,
-    win: { ...d.win, ...patch.win },
     deck: { ...d.deck, ...patch.deck },
   };
   return ruleConfigSchema.parse(merged);

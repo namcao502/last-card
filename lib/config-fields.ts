@@ -4,14 +4,12 @@ export type FieldType = 'number' | 'enum';
 export interface ConfigField {
   path: string; type: FieldType; label: string; help?: string;
   min?: number; max?: number; options?: { value: string; label: string }[];
-  group: 'Table' | 'Colored cards' | 'Black draws' | 'Math & defense' | 'Special cards' | 'Targeted cards' | 'Win';
+  group: 'Table' | 'Colored cards' | 'Black draws' | 'Math & defense' | 'Special cards' | 'Targeted cards';
 }
 
 export const CONFIG_FIELDS: ConfigField[] = [
   { path: 'maxPlayers', type: 'number', label: 'Max players', min: 2, max: 10, group: 'Table' },
   { path: 'startingHandSize', type: 'number', label: 'Starting hand size', min: 1, max: 15, group: 'Table' },
-  { path: 'win.condition', type: 'enum', label: 'Win condition', options: [{ value: 'firstToEmpty', label: 'First to empty' }, { value: 'pointsTarget', label: 'Points target' }], group: 'Win' },
-  { path: 'win.pointsTarget', type: 'number', label: 'Points target', min: 50, max: 2000, group: 'Win' },
   // Colored deck counts (per color x4)
   { path: 'deck.numberPerColor', type: 'number', label: 'Numbers (each 0-9, per color)', min: 0, max: 4, group: 'Colored cards' },
   { path: 'deck.colorDraw2PerColor', type: 'number', label: 'Colored +2 (per color)', min: 0, max: 6, group: 'Colored cards' },

@@ -9,6 +9,7 @@
     "serve": "npm run build && firebase emulators:start --only functions,database,auth"
   },
   "dependencies": {
+    "@uno/engine": "file:../packages/engine",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.1.0"
   },

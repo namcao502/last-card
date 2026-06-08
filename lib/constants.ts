@@ -5,13 +5,13 @@
  */
 
 export const COLORS = {
-  yellow: 'var(--color-uno-yellow)',
-  red: 'var(--color-uno-red)',
-  green: 'var(--color-uno-green)',
-  blue: 'var(--color-uno-blue)',
-  black: 'var(--color-uno-black)',
-  table: 'var(--color-uno-table)',
-  ink: 'var(--color-uno-ink)',
+  yellow: 'var(--color-lc-yellow)',
+  red: 'var(--color-lc-red)',
+  green: 'var(--color-lc-green)',
+  blue: 'var(--color-lc-blue)',
+  black: 'var(--color-lc-black)',
+  table: 'var(--color-lc-table)',
+  ink: 'var(--color-lc-ink)',
   white: '#ffffff',
 } as const;
 
@@ -123,6 +123,9 @@ export const STRINGS = {
     close: 'Close',
     reconnecting: 'Reconnecting...',
     audienceBanner: 'You are in the audience - you can still watch and chat.',
+    historyTitle: 'Game history',
+    emptyHistory: 'No moves yet.',
+    drawChain: 'Draw chain',
   },
   roundEnd: {
     gameOver: 'Game over',

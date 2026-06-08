@@ -1,4 +1,4 @@
-import type { RuleConfig } from '@uno/engine';
+import type { RuleConfig } from '@last-card/engine';
 
 export type FieldType = 'number' | 'enum';
 export interface ConfigField {

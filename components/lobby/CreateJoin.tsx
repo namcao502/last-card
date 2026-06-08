@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { DEFAULT_CONFIG, type RuleConfig } from '@uno/engine';
+import { DEFAULT_CONFIG, type RuleConfig } from '@last-card/engine';
 import { useAuth } from '@/lib/auth';
 import { callCreateRoom, callJoinRoom } from '@/lib/functions';
 import { Button } from '@/components/ui/button';
@@ -76,11 +76,11 @@ export function CreateJoin({ mode }: { mode: 'create' | 'join' }) {
           <h2 className="text-lg font-bold">{STRINGS.createJoin.deckTitle}</h2>
           <DeckConfig config={config} onChange={setConfig} disabled={busy} />
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={isPublic} disabled={busy} onChange={(e) => setIsPublic(e.target.checked)} className="h-4 w-4 accent-uno-yellow" />
+            <input type="checkbox" checked={isPublic} disabled={busy} onChange={(e) => setIsPublic(e.target.checked)} className="h-4 w-4 accent-lc-yellow" />
             {STRINGS.createJoin.publicToggle}
           </label>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button disabled={busy || !ready} onClick={create} className="bg-uno-yellow text-uno-ink hover:bg-uno-yellow/90">
+          <Button disabled={busy || !ready} onClick={create} className="bg-lc-yellow text-lc-ink hover:bg-lc-yellow/90">
             {STRINGS.createJoin.createRoom}
           </Button>
         </div>

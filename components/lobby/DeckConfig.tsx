@@ -1,5 +1,5 @@
 'use client';
-import { DEFAULT_CONFIG, deckTotal, type RuleConfig } from '@uno/engine';
+import { DEFAULT_CONFIG, deckTotal, type RuleConfig } from '@last-card/engine';
 import { CONFIG_FIELDS, getPath, setPath, type ConfigField } from '@/lib/config-fields';
 import { Button } from '@/components/ui/button';
 

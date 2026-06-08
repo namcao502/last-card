@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   isPlayable, classifySet, type Card, type CardColor, type CardKind, type Move,
-} from '@uno/engine';
+} from '@last-card/engine';
 import { useRoom } from '@/lib/hooks/useRoom';
 import { useHand } from '@/lib/hooks/useHand';
 import { usePresence } from '@/lib/hooks/usePresence';
@@ -12,9 +12,10 @@ import { useServerNow } from '@/lib/hooks/useServerNow';
 import { useAuth } from '@/lib/auth';
 import { callSubmitMove, callForceTimeout } from '@/lib/functions';
 import { Button } from '@/components/ui/button';
-import { UnoCard, cardLabel } from './UnoCard';
+import { GameCard, cardLabel } from './GameCard';
 import { cardInfo } from '@/lib/card-info';
 import { ChatPanel } from './ChatPanel';
+import { GameLog } from './GameLog';
 import { ConnectionBanner } from './ConnectionBanner';
 import { RoundEndDialog } from './RoundEndDialog';
 import { LeaveRoomButton } from '@/components/lobby/LeaveRoomButton';
@@ -121,7 +122,7 @@ export function GameTable({ roomId }: { roomId: string }) {
             </span>
             {pub.colorLocked && <span className="rounded bg-muted px-2 py-0.5 text-xs">color-locked</span>}
             {timerSecs !== null && (
-              <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${timerSecs <= TIMING.timerWarnSeconds ? 'bg-uno-red text-white' : 'bg-muted'}`} aria-label={`${timerSecs} seconds left`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${timerSecs <= TIMING.timerWarnSeconds ? 'bg-lc-red text-white' : 'bg-muted'}`} aria-label={`${timerSecs} seconds left`}>
                 {timerSecs}s
               </span>
             )}
@@ -137,14 +138,14 @@ export function GameTable({ roomId }: { roomId: string }) {
             const reconnectLeft = offline && presence[s.id]?.lastSeen
               ? Math.max(0, TIMING.reconnectSeconds - Math.floor((serverNow - presence[s.id].lastSeen) / 1000)) : null;
             return (
-              <div key={s.id} className={`rounded-lg border px-3 py-2 text-sm ${s.turn ? 'border-uno-yellow ring-2 ring-uno-yellow/40' : 'bg-card'} ${offline ? 'opacity-60' : ''}`}>
+              <div key={s.id} className={`rounded-lg border px-3 py-2 text-sm ${s.turn ? 'border-lc-yellow ring-2 ring-lc-yellow/40' : 'bg-card'} ${offline ? 'opacity-60' : ''}`}>
                 <div className="font-semibold">{s.name}{s.isBot ? ' 🤖' : ''}</div>
                 <div className="text-xs text-muted-foreground">
                   {s.status === 'out' ? <span className="font-bold text-destructive">AUDIENCE</span> : `${s.handCount} cards`}
                   {s.status === 'active' && s.handCount === 1 && ' • 1 card!'}
                 </div>
                 {offline && (
-                  <div className="text-xs font-semibold text-uno-red">
+                  <div className="text-xs font-semibold text-lc-red">
                     disconnected{reconnectLeft !== null ? ` - ${reconnectLeft}s` : ''}
                   </div>
                 )}
@@ -164,18 +165,18 @@ export function GameTable({ roomId }: { roomId: string }) {
         )}
 
         {/* Center */}
-        <div className="flex items-center justify-center gap-8 rounded-2xl border bg-uno-table p-8">
+        <div className="flex items-center justify-center gap-8 rounded-2xl border bg-lc-table p-8">
           <button
             type="button"
             disabled={!myTurn || eliminated}
             onClick={() => submit({ type: 'draw', playerId: myId })}
             aria-label={pub.pending ? `draw ${pub.pending.total}` : 'draw a card'}
-            className="flex h-24 w-16 items-center justify-center rounded-xl border-4 border-white bg-uno-black font-bold text-white disabled:opacity-60"
+            className="flex h-24 w-16 items-center justify-center rounded-xl border-4 border-white bg-lc-black font-bold text-white disabled:opacity-60"
           >
             {STRINGS.game.draw}
           </button>
           <div className="flex flex-col items-center gap-1">
-            <UnoCard card={pub.discardTop} onInspect={() => setInspect(pub.discardTop)} />
+            <GameCard card={pub.discardTop} onInspect={() => setInspect(pub.discardTop)} />
             <span className="text-xs text-white/80">{pub.drawCount} {STRINGS.game.deckSuffix}</span>
           </div>
           {pub.pending && (
@@ -188,12 +189,12 @@ export function GameTable({ roomId }: { roomId: string }) {
 
         {/* Duel banner */}
         {pub.phase === 'duel' && pub.duel && (
-          <div className="rounded-lg bg-uno-red/15 px-4 py-2 text-center text-sm font-semibold text-uno-red">
+          <div className="rounded-lg bg-lc-red/15 px-4 py-2 text-center text-sm font-semibold text-lc-red">
             ⚔ Duel: {seatName(seats, pub.duel.challengerId)} vs {seatName(seats, pub.duel.opponentId)} — {seatName(seats, pub.turnId)}&apos;s move
           </div>
         )}
         {pub.phase === 'bombResponse' && (
-          <div className="rounded-lg bg-uno-black px-4 py-2 text-center text-sm font-semibold text-white">
+          <div className="rounded-lg bg-lc-black px-4 py-2 text-center text-sm font-semibold text-white">
             💣 Bomb! {pub.turnId === myId ? 'Your response' : `Waiting for ${seatName(seats, pub.turnId)}`}
           </div>
         )}
@@ -236,7 +237,7 @@ export function GameTable({ roomId }: { roomId: string }) {
           <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-3">
             {hand.length === 0 && <span className="text-sm text-muted-foreground">{STRINGS.game.noCards}</span>}
             {hand.map((c) => (
-              <UnoCard
+              <GameCard
                 key={c.id}
                 card={c}
                 selected={selected.includes(c.id)}
@@ -250,7 +251,10 @@ export function GameTable({ roomId }: { roomId: string }) {
         )}
       </div>
 
-      <ChatPanel roomId={roomId} nickname={nickname} />
+      <div className="space-y-4">
+        <GameLog log={pub.log} />
+        <ChatPanel roomId={roomId} nickname={nickname} />
+      </div>
 
       {/* Overlays: color / target / gift pickers */}
       {draft && (
@@ -273,7 +277,7 @@ export function GameTable({ roomId }: { roomId: string }) {
             <Picker title="Choose a card to gift">
               {hand.filter((c) => !draft.cardIds.includes(c.id)).map((c) => (
                 <button key={c.id} onClick={() => submit({ type: 'play', playerId: myId, cardIds: draft.cardIds, targetId: draft.targetId, giftCardId: c.id })}>
-                  <UnoCard card={c} small />
+                  <GameCard card={c} small />
                 </button>
               ))}
             </Picker>
@@ -285,7 +289,7 @@ export function GameTable({ roomId }: { roomId: string }) {
       {inspect && (
         <Overlay onClose={() => setInspect(null)}>
           <div className="max-w-xs rounded-xl border bg-card p-5 text-center">
-            <div className="mb-3 flex justify-center"><UnoCard card={inspect} /></div>
+            <div className="mb-3 flex justify-center"><GameCard card={inspect} /></div>
             <h3 className="font-bold">{cardInfo(inspect).name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{cardInfo(inspect).effect}</p>
             <Button className="mt-4" onClick={() => setInspect(null)}>{STRINGS.game.close}</Button>
@@ -298,7 +302,7 @@ export function GameTable({ roomId }: { roomId: string }) {
         <Overlay onClose={dismiss}>
           <Picker title={`${seatName(seats, peek.targetId)}'s hand`}>
             <div className="flex max-w-md flex-wrap gap-2">
-              {peek.cards.map((c) => <UnoCard key={c.id} card={c} small />)}
+              {peek.cards.map((c) => <GameCard key={c.id} card={c} small />)}
             </div>
             <Button className="mt-3" onClick={dismiss}>Done</Button>
           </Picker>

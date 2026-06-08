@@ -1,34 +1,42 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { ruleConfigSchema, deckTotal, seatPlayer, forfeit, DEFAULT_CONFIG, type RuleConfig } from '@uno/engine';
+import { ruleConfigSchema, deckTotal, seatPlayer, forfeit, DEFAULT_CONFIG, type RuleConfig } from '@last-card/engine';
 import { db } from './firebase.js';
 import { requireHuman } from './auth.js';
 import { applyAuthoritative } from './game.js';
 
 const LIVE_PHASES = ['playing', 'duel', 'bombResponse'];
+const MAX_AUDIENCE = 10; // hard cap on spectators per room (players are capped separately by config.maxPlayers)
 
 function genCode(): string {
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('');
 }
 
-type SeatMap = Record<string, { isAudience?: boolean; seatIndex?: number; status?: string; handCount?: number }>;
+type SeatMap = Record<string, { isAudience?: boolean; isBot?: boolean; seatIndex?: number; status?: string; handCount?: number }>;
 
 /** Count only active-eligible (non-audience) seats - the figure capped by maxPlayers. */
 function playerSeatCount(seats: SeatMap): number {
   return Object.values(seats).filter((s) => !s.isAudience).length;
 }
 
+/** Count spectator seats - the figure capped by MAX_AUDIENCE. */
+function audienceSeatCount(seats: SeatMap): number {
+  return Object.values(seats).filter((s) => s.isAudience).length;
+}
+
 /**
  * Keep the public `lobbies/{code}` browse index in sync with a room. The room
  * stays listed through the game (so spectators / mid-game joiners can find it);
- * the entry is removed only when the room is private, empty, or finished.
+ * the entry is removed only when the room is private, empty, human-less, or finished.
  * Refreshes the live player count and phase. roomId === code.
  */
 async function syncLobby(roomId: string): Promise<void> {
   const meta = (await db.ref(`rooms/${roomId}/meta`).get()).val();
   const seats = ((await db.ref(`rooms/${roomId}/seats`).get()).val() ?? {}) as SeatMap;
   const players = playerSeatCount(seats);
-  if (!meta || !meta.isPublic || players === 0 || meta.phase === 'gameOver') {
+  // A room with only bots and no humans must never linger in the public browser.
+  const hasHuman = Object.values(seats).some((s) => !s.isBot);
+  if (!meta || !meta.isPublic || players === 0 || !hasHuman || meta.phase === 'gameOver') {
     await db.ref(`lobbies/${roomId}`).remove();
     return;
   }
@@ -111,8 +119,13 @@ export const joinRoom = onCall(async (req) => {
   const existing = seats[uid];
   const live = LIVE_PHASES.includes(meta.phase);
 
-  // --- Audience: spectate, any phase, uncapped, no engine involvement --------
+  // --- Audience: spectate, any phase, capped at MAX_AUDIENCE, no engine involvement ---
   if (role === 'audience') {
+    // A spectator already in the room may re-enter (idempotent); only a genuinely
+    // new spectator is rejected once the room is full of watchers.
+    if (!existing?.isAudience && audienceSeatCount(seats) >= MAX_AUDIENCE) {
+      throw new HttpsError('resource-exhausted', 'Spectator limit reached');
+    }
     const seatIndex = existing?.seatIndex ?? await claimSeatIndex(roomId);
     await db.ref(`rooms/${roomId}`).update({
       [`members/${uid}`]: true,
@@ -188,6 +201,24 @@ export const leaveRoom = onCall(async (req) => {
   const roomId = String(req.data?.roomId ?? '');
   const meta = (await db.ref(`rooms/${roomId}/meta`).get()).val();
   const seat = (await db.ref(`rooms/${roomId}/seats/${uid}`).get()).val();
+
+  // members/ holds every human in the room (player or audience). If this user is
+  // the last human, the room would be left with only bots - tear it down entirely
+  // rather than leaving a human-less ghost room listed in the browser.
+  const members = ((await db.ref(`rooms/${roomId}/members`).get()).val() ?? {}) as Record<string, boolean>;
+  const humansRemain = Object.keys(members).some((id) => id !== uid);
+  if (!humansRemain) {
+    // Remove every path the room touches, incl. the admin-only authoritative
+    // state at secure/ and any Eye-reveal peek nodes, so nothing is orphaned.
+    await Promise.all([
+      db.ref(`rooms/${roomId}`).remove(),
+      db.ref(`hands/${roomId}`).remove(),
+      db.ref(`secure/${roomId}`).remove(),
+      db.ref(`peek/${roomId}`).remove(),
+      db.ref(`lobbies/${roomId}`).remove(),
+    ]);
+    return { ok: true };
+  }
 
   // Forfeit out of a live game so play continues for everyone else.
   if (meta && seat && !seat.isAudience && seat.status === 'active' && LIVE_PHASES.includes(meta.phase)) {

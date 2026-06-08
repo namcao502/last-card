@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toArray, normalize, sanitize } from '../src/serde.js';
-import { createGame, applyMove, DEFAULT_CONFIG, deckTotal } from '@uno/engine';
+import { createGame, applyMove, DEFAULT_CONFIG, deckTotal } from '@last-card/engine';
 
 describe('serde', () => {
   it('toArray restores a keyed-object array in numeric order', () => {

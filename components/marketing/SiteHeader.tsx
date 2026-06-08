@@ -10,11 +10,8 @@ export function SiteHeader() {
   return (
     <header className="flex items-center justify-between gap-4 py-6">
       <Link href="/" className="flex items-center gap-2 text-xl font-extrabold tracking-wide">
-        <span className="flex">
-          <span className="-mr-2 inline-flex h-8 w-6 -rotate-6 items-center justify-center rounded-md border-2 border-white bg-uno-red text-white">U</span>
-          <span className="inline-flex h-8 w-6 rotate-6 items-center justify-center rounded-md border-2 border-white bg-uno-green text-white">N</span>
-        </span>
-        UNO INFINITY
+        <span className="inline-flex h-8 items-center justify-center rounded-md border-2 border-white bg-lc-red px-1.5 text-xs font-black text-white">LC</span>
+        LAST CARD
       </Link>
       <nav className="flex items-center gap-3 text-sm font-semibold text-muted-foreground sm:gap-5">
         <Link href="/how-to-play" className="hidden hover:text-foreground sm:inline">{STRINGS.header.howToPlay}</Link>

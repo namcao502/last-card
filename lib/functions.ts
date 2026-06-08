@@ -1,7 +1,7 @@
 'use client';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
-import type { Move, RuleConfig } from '@uno/engine';
+import type { Move, RuleConfig } from '@last-card/engine';
 
 export const callCreateRoom = httpsCallable<{ name: string; config: RuleConfig; isPublic: boolean }, { roomId: string; code: string }>(functions, 'createRoom');
 export const callJoinRoom   = httpsCallable<{ code: string; name: string; role: 'player' | 'audience' }, { roomId: string }>(functions, 'joinRoom');

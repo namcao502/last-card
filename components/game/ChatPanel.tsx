@@ -14,14 +14,14 @@ export function ChatPanel({ roomId, nickname }: { roomId: string; nickname: stri
   const submit = () => { if (text.trim()) { send('text', text); setText(''); } };
 
   return (
-    <div className="flex h-[560px] flex-col rounded-xl border bg-card">
+    <div className="flex h-[400px] flex-col rounded-xl border bg-card">
       <div className="border-b px-4 py-3 font-bold">{STRINGS.chat.title}</div>
       <div className="flex flex-1 flex-col gap-2 overflow-auto px-4 py-3">
         {messages.map((m) =>
           m.kind === 'emote' ? (
             <div key={m.id} className="text-2xl"><span className="text-xs text-muted-foreground">{m.name}: </span>{m.body}</div>
           ) : (
-            <div key={m.id} className="text-sm leading-snug"><b className="text-uno-yellow">{m.name}:</b> {m.body}</div>
+            <div key={m.id} className="text-sm leading-snug"><b className="text-lc-yellow">{m.name}:</b> {m.body}</div>
           ),
         )}
         {messages.length === 0 && <p className="text-sm text-muted-foreground">{STRINGS.chat.empty}</p>}

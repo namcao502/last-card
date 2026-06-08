@@ -44,7 +44,7 @@ export function Lobby({ roomId }: { roomId: string }) {
       <div className="flex items-center justify-between rounded-xl border border-dashed bg-card p-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{STRINGS.lobby.roomCode}</p>
-          <p className="text-2xl font-black tracking-[0.3em] text-uno-yellow">{meta.code}</p>
+          <p className="text-2xl font-black tracking-[0.3em] text-lc-yellow">{meta.code}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => navigator.clipboard?.writeText(`${location.origin}/play?room=${roomId}`)}>
@@ -62,7 +62,7 @@ export function Lobby({ roomId }: { roomId: string }) {
         <ul className="space-y-2">
           {players.map((s) => (
             <li key={s.id} className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-uno-blue text-sm font-bold text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lc-blue text-sm font-bold text-white">
                 {s.name.charAt(0).toUpperCase()}
               </span>
               <span className="font-medium">{s.name}</span>
@@ -89,7 +89,7 @@ export function Lobby({ roomId }: { roomId: string }) {
               {STRINGS.lobby.addBot}
             </Button>
             <Button
-              className="flex-1 bg-uno-yellow text-uno-ink hover:bg-uno-yellow/90"
+              className="flex-1 bg-lc-yellow text-lc-ink hover:bg-lc-yellow/90"
               disabled={busy || !canStart}
               title={canStart ? undefined : STRINGS.lobby.needTwo}
               onClick={async () => { setBusy(true); try { await callStartGame({ roomId }); } finally { setBusy(false); } }}

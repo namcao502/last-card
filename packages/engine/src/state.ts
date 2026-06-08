@@ -15,6 +15,18 @@ export interface PendingDraw { total: number; topValue: number; source: 'colorDr
 export interface DuelState { challengerId: string; opponentId: string; activeId: string }
 export interface BombResponse { bomberId: string; pending: string[]; bomberDraw: number; endColor: CardColor }
 
+/** One entry in the game history. `text` is a verb phrase WITHOUT the actor name (the UI prefixes it). */
+export interface LogEntry {
+  seq: number;            // unique monotonic id -> React key / ordering
+  actorId: string;
+  actorName: string;
+  kind: 'play' | 'draw' | 'shield' | 'counter' | 'skip' | 'eliminate' | 'win' | 'system';
+  text: string;
+  cards?: Card[];         // cards played (kind 'play')
+  drawCount?: number;     // cards drawn (kind 'draw')
+  stackId?: number;       // present -> part of a draw-stack chain (grouped in the UI)
+}
+
 export interface GameState {
   phase: GamePhase;
   config: RuleConfig;
@@ -31,7 +43,9 @@ export interface GameState {
   goAgain: boolean;
   winnerId: string | null;
   seed: string;
-  log: string;
+  log: LogEntry[];
+  chainId: number;        // bumped each time a draw stack opens; ties chain entries together
+  eventSeq: number;       // next LogEntry.seq to assign
 }
 
 export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string): GameState {
@@ -58,7 +72,7 @@ export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string
     phase: 'playing', config, players,
     drawPile, discardPile: [first], currentColor: first.color, colorLocked: false,
     turnIndex: 0, direction: 1, pending: null, duel: null, bombResponse: null, goAgain: false,
-    winnerId: null, seed, log: 'Game started',
+    winnerId: null, seed, log: [], chainId: 0, eventSeq: 0,
   };
 }
 

@@ -20,7 +20,7 @@ export function RoundEndDialog({ meta, seats, winnerId }: RoundEndDialogProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
         <h2 className="text-2xl font-black">{STRINGS.roundEnd.gameOver}</h2>
-        <p className="mt-1 text-uno-yellow">{winner ? `${winner.name} wins!` : STRINGS.roundEnd.winnerDecided}</p>
+        <p className="mt-1 text-lc-yellow">{winner ? `${winner.name} wins!` : STRINGS.roundEnd.winnerDecided}</p>
         <ul className="mt-4 space-y-1 text-left text-sm">
           {standings.map((s) => (
             <li key={s.id} className="flex justify-between rounded border bg-background px-3 py-1.5">

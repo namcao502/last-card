@@ -6,17 +6,17 @@ runConfig:
 # (next build / next start) - no custom build/run commands needed.
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "AIzaSyAzpD2DcBWZh2DbQoFEPLZZR9UDu7N2MVI"
+    value: "AIzaSyAM0Xowdxd99nnX9evum_2EeolSVyRvnMg"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "uno-infinity.firebaseapp.com"
+    value: "last-card-69881.firebaseapp.com"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_DATABASE_URL
-    value: "https://uno-infinity-default-rtdb.firebaseio.com"
+    value: "https://last-card-69881-default-rtdb.asia-southeast1.firebasedatabase.app"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: "uno-infinity"
+    value: "last-card-69881"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "1:952368746686:web:cc3f038242ec117ed04eef"
+    value: "1:719409120290:web:8804eebd3e803235edf67b"
     availability: [BUILD, RUNTIME]

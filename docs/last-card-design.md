@@ -1,12 +1,12 @@
-# UNO Infinity - Engine Design & Resolved Rules
+# Last Card - Engine Design & Resolved Rules
 
-> Source ruleset: `docs/UNO_infinity_rules.md` (Vietnamese). This document is the engineering
+> Source ruleset: `docs/last-card-rules.md` (Vietnamese). This document is the engineering
 > interpretation that the implementation plan will be built on. It REPLACES the classic ruleset.
 > Each "RD#" below is a resolved decision for an ambiguous source rule - review and correct before
 > the plan tasks are generated.
 
 ## Scope (confirmed)
-- UNO Infinity **replaces** the classic game. Infra (Next.js, Firebase, Auth, RTDB, Cloud Functions
+- Last Card **replaces** the classic game. Infra (Next.js, Firebase, Auth, RTDB, Cloud Functions
   shell, lobby, theme) carries over; the rule engine, card model, move model and game-table UI are rebuilt.
 - **All** mechanic groups in scope: multi-card plays, extended draw math, targeted cards, special modes.
 - **Shield/Counter:** "on your turn" model only (no out-of-turn reaction window).

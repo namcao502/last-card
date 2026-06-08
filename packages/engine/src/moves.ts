@@ -1,5 +1,5 @@
 import { isBlack, isDraw, type Card, type CardColor } from './cards';
-import { topCard, nextActiveIndex, activePlayers, MAX_HAND, type GameState, type PlayerState, type PlayerSeed } from './state';
+import { topCard, nextActiveIndex, activePlayers, MAX_HAND, type GameState, type PlayerState, type PlayerSeed, type LogEntry } from './state';
 import { classifySet, type Combo } from './combos';
 import { createRng, shuffle } from './rng';
 import type { Move } from './types';
@@ -11,7 +11,17 @@ export const clone = (s: GameState): GameState => ({
   pending: s.pending ? { ...s.pending } : null,
   duel: s.duel ? { ...s.duel } : null,
   bombResponse: s.bombResponse ? { ...s.bombResponse, pending: [...s.bombResponse.pending] } : null,
+  log: [...s.log],
 });
+
+/** Keep the game history bounded so the serialized state stays small. */
+const LOG_MAX = 50;
+
+/** Append a history entry (auto-assigns seq) and drop the oldest past the cap. */
+function pushLog(s: GameState, e: Omit<LogEntry, 'seq'>): void {
+  s.log.push({ seq: s.eventSeq++, ...e });
+  if (s.log.length > LOG_MAX) s.log.shift();
+}
 
 /** Advance to the next ACTIVE seat (skips eliminated players); clears per-turn flags.
  *  Duel-aware: inside a duel it toggles between the two duelists instead. */
@@ -35,7 +45,7 @@ function reshuffle(s: GameState): void {
 export function eliminateIfOverloaded(s: GameState, p: PlayerState): void {
   if (p.hand.length > MAX_HAND && p.status === 'active') {
     p.status = 'out';
-    s.log = `${p.name} overloaded (${p.hand.length}) and is out`;
+    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'eliminate', text: `overloaded (${p.hand.length}) and is out` });
   }
 }
 
@@ -51,9 +61,16 @@ export function drawCards(s: GameState, p: PlayerState, count: number): void {
 /** Win checks: any active player emptied, or only one active player remains (RD18, RD20). */
 function checkEnd(s: GameState): GameState {
   const emptied = s.players.find(p => p.status === 'active' && p.hand.length === 0);
-  if (emptied) { s.winnerId = emptied.id; s.phase = 'gameOver'; s.log = `${emptied.name} wins!`; return s; }
+  if (emptied) {
+    s.winnerId = emptied.id; s.phase = 'gameOver';
+    pushLog(s, { actorId: emptied.id, actorName: emptied.name, kind: 'win', text: 'wins!' });
+    return s;
+  }
   const act = activePlayers(s);
-  if (act.length === 1) { s.winnerId = act[0].id; s.phase = 'gameOver'; s.log = `${act[0].name} is the last player standing!`; }
+  if (act.length === 1) {
+    s.winnerId = act[0].id; s.phase = 'gameOver';
+    pushLog(s, { actorId: act[0].id, actorName: act[0].name, kind: 'win', text: 'is the last player standing!' });
+  }
   return s;
 }
 
@@ -75,14 +92,15 @@ const acting = (s: GameState): PlayerState =>
 function resolveDraw(s: GameState): GameState {
   const p = acting(s);
   if (s.pending) {
-    drawCards(s, p, s.pending.total);
-    s.log = `${p.name} drew ${s.pending.total}`;
+    const total = s.pending.total;
+    drawCards(s, p, total);
+    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'draw', text: `drew ${total}`, drawCount: total, stackId: s.chainId });
     s.pending = null; s.colorLocked = false;
     if (s.phase === 'duel') return endDuel(s);   // drawing ends a duel
     advance(s, 1);
   } else {
     drawCards(s, p, 1);
-    s.log = `${p.name} drew a card`;
+    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'draw', text: 'drew a card', drawCount: 1 });
     advance(s, 1);
   }
   return checkEnd(s);
@@ -94,13 +112,13 @@ function discardKind(s: GameState, p: PlayerState, kind: 'shield' | 'counter'): 
 }
 function resolveShield(s: GameState): GameState {           // push pending to next player
   const p = acting(s); discardKind(s, p, 'shield');        // legality forbids this being the last card (RD19)
-  s.log = `${p.name} shielded`;
+  pushLog(s, { actorId: p.id, actorName: p.name, kind: 'shield', text: 'shielded', stackId: s.pending ? s.chainId : undefined });
   advance(s, 1);                                            // pending preserved, passes to next
   return checkEnd(s);
 }
 function resolveCounter(s: GameState): GameState {          // bounce pending to previous player
   const p = acting(s); discardKind(s, p, 'counter');
-  s.log = `${p.name} countered`;
+  pushLog(s, { actorId: p.id, actorName: p.name, kind: 'counter', text: 'countered', stackId: s.pending ? s.chainId : undefined });
   const dir = s.direction; s.direction = (-dir) as 1 | -1;
   advance(s, 1); s.direction = dir;                         // step backward one active seat (toggles in duel)
   return checkEnd(s);
@@ -112,7 +130,13 @@ function applyPlay(s: GameState, move: Extract<Move, { type: 'play' }>): GameSta
   const combo = (classifySet(cards) as { ok: true; combo: Combo }).combo; // legality already validated
   actor.hand = actor.hand.filter(c => !move.cardIds.includes(c.id));
   for (const c of combo.cards) s.discardPile.push(c);
-  s.log = `${actor.name} played ${combo.kind === 'single' ? combo.lead.kind : combo.kind}`;
+  const stacking = s.pending != null;                      // responding to an existing draw stack
+  const opensStack = s.pending == null && isDraw(combo.lead);
+  if (opensStack) s.chainId++;                             // a fresh draw chain begins
+  pushLog(s, {
+    actorId: actor.id, actorName: actor.name, kind: 'play', text: 'played',
+    cards: combo.cards, stackId: stacking || opensStack ? s.chainId : undefined,
+  });
 
   // --- Stack responses (pending exists): draw-extend, x2, div ---
   if (s.pending) {
@@ -168,10 +192,10 @@ function resolveBombResponse(s: GameState, move: Move): GameState {
   if (move.type === 'shield' || move.type === 'counter') {
     discardKind(s, responder, move.type);                  // consume the held card
     br.bomberDraw += 4;                                     // 4 per responder who bounces
-    s.log = `${responder.name} ${move.type === 'shield' ? 'shielded' : 'countered'} the bomb`;
+    pushLog(s, { actorId: responder.id, actorName: responder.name, kind: move.type, text: `${move.type === 'shield' ? 'shielded' : 'countered'} the bomb` });
   } else {                                                  // any other move (draw) = accept
     drawCards(s, responder, 4);
-    s.log = `${responder.name} took 4 from the bomb`;
+    pushLog(s, { actorId: responder.id, actorName: responder.name, kind: 'draw', text: 'took 4 from the bomb', drawCount: 4 });
   }
   br.pending.shift();
   return br.pending.length > 0 ? s : finishBomb(s);
@@ -271,6 +295,7 @@ function applyRecycle(s: GameState, move: Extract<Move, { type: 'play' }>): void
   if (isDraw(copied)) {
     s.pending = { total: copied.value ?? 0, topValue: copied.value ?? 0, source: isBlack(copied) ? 'blackDraw' : 'colorDraw' };
     s.currentColor = isBlack(copied) ? (move.chosenColor ?? s.currentColor) : copied.color;
+    s.chainId++;                                            // recycle copying a draw opens a fresh chain
     advance(s, 1); return;
   }
   if (!isBlack(copied)) s.currentColor = copied.color;
@@ -293,7 +318,7 @@ export function skipTurn(state: GameState): GameState {
   if (s.phase === 'duel') return endDuel(s);         // no stack: just exit the duel
   const skipped = s.players[s.turnIndex];
   advance(s, 1);
-  s.log = `${skipped.name} was skipped`;
+  pushLog(s, { actorId: skipped.id, actorName: skipped.name, kind: 'skip', text: 'was skipped' });
   return checkEnd(s);
 }
 
@@ -307,7 +332,7 @@ export function forfeit(state: GameState, playerId: string): GameState {
   const p = s.players.find(x => x.id === playerId);
   if (!p || p.status !== 'active') return s;
   p.status = 'out';
-  s.log = `${p.name} left the game`;
+  pushLog(s, { actorId: p.id, actorName: p.name, kind: 'system', text: 'left the game' });
 
   if (s.phase === 'bombResponse' && s.bombResponse) {
     s.bombResponse.pending = s.bombResponse.pending.filter(id => id !== playerId);
@@ -335,14 +360,14 @@ export function seatPlayer(state: GameState, seed: PlayerSeed): GameState {
     if (existing.status === 'out') {
       existing.status = 'active';
       if (existing.hand.length === 0) drawCards(s, existing, s.config.startingHandSize);
-      s.log = `${existing.name} rejoined`;
+      pushLog(s, { actorId: existing.id, actorName: existing.name, kind: 'system', text: 'rejoined' });
     }
     return s;
   }
   const p: PlayerState = { id: seed.id, name: seed.name, isBot: seed.isBot, connected: true, status: 'active', hand: [] };
   s.players.push(p);
   drawCards(s, p, s.config.startingHandSize);
-  s.log = `${seed.name} joined the game`;
+  pushLog(s, { actorId: p.id, actorName: p.name, kind: 'system', text: 'joined the game' });
   return s;
 }
 

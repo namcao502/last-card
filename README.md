@@ -1,6 +1,6 @@
-# UNO Infinity
+# Last Card
 
-Real-time, server-authoritative multiplayer **UNO Infinity** - an expanded UNO variant with extended
+Real-time, server-authoritative multiplayer **Last Card** - an expanded card game with extended
 draw math, multi-card plays, targeted/special cards, a 1v1 duel sub-mode, and a counterable bomb.
 
 ## Architecture
@@ -39,16 +39,16 @@ import). For a real project, fill `apps/web/.env.local`; for deploy, `apphosting
 
 ## Customizing the deck / rules
 
-UNO Infinity is THE ruleset; what you tune is the **deck composition** (per-card counts) plus a few
+Last Card is THE ruleset; what you tune is the **deck composition** (per-card counts) plus a few
 settings, all in `RuleConfig` (`packages/engine/src/config.ts`). The lobby's Deck Config screen edits
 these (see `apps/web/lib/config-fields.ts`). The resolved rules are documented in
-`docs/UNO_infinity_design.md` (RD1-RD20); the source ruleset is `docs/UNO_infinity_rules.md`.
+`docs/last-card-design.md` (RD1-RD20); the source ruleset is `docs/last-card-rules.md`.
 
 ### Adding a new card kind
 
 1. Add it to `CardKind` and `DeckCounts` (+ `DEFAULT_DECK`, `deckTotal`) in `packages/engine/src/cards.ts` / `config.ts`.
 2. Teach `classifySet` (if it changes multi-card rules), `isMoveLegal`, and `applyEffect` (`rules.ts` / `moves.ts`).
-3. Add a `CONFIG_FIELDS` entry (`apps/web/lib/config-fields.ts`) and render it in `UnoCard`.
+3. Add a `CONFIG_FIELDS` entry (`apps/web/lib/config-fields.ts`) and render it in `GameCard`.
 4. Write engine tests first (TDD) and keep `npm run test:engine` green.
 
 ## Tests

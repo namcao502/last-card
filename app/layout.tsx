@@ -5,8 +5,8 @@ import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "UNO Infinity",
-  description: "Multiplayer UNO Infinity - an expanded UNO variant",
+  title: "Last Card",
+  description: "Last Card - a fast, real-time multiplayer card game where you race to empty your hand.",
 };
 
 export default function RootLayout({

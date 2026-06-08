@@ -12,7 +12,7 @@ export function SignInGate() {
       <p className="text-muted-foreground">{STRINGS.signInGate.subtitle}</p>
       <Button
         onClick={() => { signInGoogle().catch(() => {}); }}
-        className="w-full bg-uno-yellow text-uno-ink hover:bg-uno-yellow/90"
+        className="w-full bg-lc-yellow text-lc-ink hover:bg-lc-yellow/90"
       >
         {STRINGS.signInGate.cta}
       </Button>

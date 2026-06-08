@@ -1,4 +1,4 @@
-import type { GameState, Card, PlayerState } from '@uno/engine';
+import type { GameState, Card, PlayerState, LogEntry } from '@last-card/engine';
 
 /** RTDB stores arrays as keyed objects and drops empty ones. Restore a dense array. */
 export function toArray<T>(v: unknown): T[] {
@@ -18,6 +18,9 @@ export function normalize(raw: unknown): GameState {
   }));
   s.drawPile = toArray<Card>((s as { drawPile: unknown }).drawPile);
   s.discardPile = toArray<Card>((s as { discardPile: unknown }).discardPile);
+  s.log = toArray<LogEntry>((s as { log: unknown }).log).map((e) => ({
+    ...e, ...(e.cards ? { cards: toArray<Card>(e.cards) } : {}),
+  }));
   return s;
 }
 

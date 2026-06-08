@@ -1,4 +1,4 @@
-UNO INFINITY
+LAST CARD
 ________________________________________
 🎨 1. Các màu cơ bản
 •	Gồm 4 màu: Đỏ, Xanh lá, Xanh lam, Vàng.

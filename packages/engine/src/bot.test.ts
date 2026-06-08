@@ -16,7 +16,7 @@ function mk(over: Partial<GameState>, hand: Card[]): GameState {
     drawPile: [C({ id: 'd', color: 'blue', value: 1 })],
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: '', ...over,
+    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 

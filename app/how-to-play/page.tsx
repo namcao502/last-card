@@ -8,7 +8,7 @@ export default function HowToPlay() {
       <article className="prose-invert mt-4 space-y-4">
         <h1 className="text-3xl font-black">How to play</h1>
         <p className="text-muted-foreground">
-          UNO Infinity is an expanded take on UNO for 2-10 players. Match the discard pile by
+          Last Card is a fast, expanded card game for 2-10 players. Match the discard pile by
           <strong> color</strong> or <strong>type/number</strong>, empty your hand to win - but mind the
           extra cards that can swing a game in one turn.
         </p>
@@ -20,7 +20,7 @@ export default function HowToPlay() {
           <li><strong>You cannot finish on a black card</strong>, and anyone whose hand passes 30 cards is knocked out into the audience.</li>
           <li><strong>First to empty their hand wins</strong> (or the last player standing).</li>
         </ol>
-        <p><Link href="/rules" className="font-semibold text-uno-yellow hover:underline">See the full house rules &rarr;</Link></p>
+        <p><Link href="/rules" className="font-semibold text-lc-yellow hover:underline">See the full house rules &rarr;</Link></p>
       </article>
     </main>
   );

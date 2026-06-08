@@ -15,7 +15,7 @@ function mk(over: Partial<GameState>, hands: Card[][]): GameState {
     drawPile: Array.from({ length: 40 }, (_, i) => C({ id: `d${i}`, color: 'green', value: (i % 9) + 1 })),
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: '', ...over,
+    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 
@@ -79,5 +79,40 @@ describe('applyMove - core', () => {
     const s = mk({ pending, turnIndex: 1 }, [[C({ id: 'a', value: 1 })], big, [C({ id: 'b', value: 2 })]]);
     const r = applyMove(s, { type: 'draw', playerId: 'p2' }); // 28 + 6 = 34 > 30
     expect(r.players[1].status).toBe('out');
+  });
+});
+
+describe('game history log', () => {
+  it('records a play entry with the actor and the cards played', () => {
+    const s = mk({}, [[C({ id: 'a', color: 'red', value: 9 }), C({ id: 'a2', color: 'blue', value: 3 })], [], []]);
+    const r = applyMove(s, { type: 'play', playerId: 'p1', cardIds: ['a'] });
+    const last = r.log.at(-1)!;
+    expect(last.kind).toBe('play');
+    expect(last.actorId).toBe('p1');
+    expect(last.cards?.map((c) => c.id)).toEqual(['a']);
+    expect(last.stackId).toBeUndefined(); // a plain number play is not a draw chain
+  });
+  it('records a solo draw with count 1 and no stackId', () => {
+    const s = mk({}, [[], [], []]);
+    const r = applyMove(s, { type: 'draw', playerId: 'p1' });
+    const last = r.log.at(-1)!;
+    expect(last.kind).toBe('draw');
+    expect(last.drawCount).toBe(1);
+    expect(last.stackId).toBeUndefined();
+  });
+  it('ties a draw chain together under one stackId across players (RD grouping)', () => {
+    const s = mk({}, [
+      [C({ id: 'a', color: 'red', kind: 'draw', value: 2 }), C({ id: 'a2', color: 'blue', value: 3 })],
+      [C({ id: 'b', color: 'red', kind: 'draw', value: 2 }), C({ id: 'b2', color: 'blue', value: 3 })],
+      [],
+    ]);
+    const r1 = applyMove(s, { type: 'play', playerId: 'p1', cardIds: ['a'] });  // opens the stack
+    const r2 = applyMove(r1, { type: 'play', playerId: 'p2', cardIds: ['b'] }); // extends it
+    const r3 = applyMove(r2, { type: 'draw', playerId: 'p3' });                 // absorbs it
+    const chain = r3.log.filter((e) => e.stackId != null);
+    expect(chain).toHaveLength(3);
+    expect(new Set(chain.map((e) => e.stackId)).size).toBe(1); // all the same chain
+    const absorb = chain.find((e) => e.kind === 'draw');
+    expect(absorb!.drawCount).toBe(4); // 2 + 2
   });
 });

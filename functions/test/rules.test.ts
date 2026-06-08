@@ -7,7 +7,7 @@ let env: RulesTestEnvironment;
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'uno-arena-test',
+    projectId: 'last-card-test',
     database: { rules: readFileSync('database.rules.json', 'utf8'), host: '127.0.0.1', port: 9000 },
   });
   // Seed a room with two members via the privileged context.
@@ -51,5 +51,22 @@ describe('RTDB rules', () => {
     const db = env.authenticatedContext('alice').database();
     await assertSucceeds(set(ref(db, 'rooms/R1/chat/m1'),
       { uid: 'alice', name: 'Alice', kind: 'text', body: 'hi', ts: Date.now() }));
+  });
+  it('a chat message with an over-length name is rejected', async () => {
+    const db = env.authenticatedContext('alice').database();
+    await assertFails(set(ref(db, 'rooms/R1/chat/m3'),
+      { uid: 'alice', name: 'x'.repeat(41), kind: 'text', body: 'hi', ts: Date.now() }));
+  });
+  it('a member can write their own presence', async () => {
+    const db = env.authenticatedContext('alice').database();
+    await assertSucceeds(set(ref(db, 'rooms/R1/presence/alice'), { online: true, lastSeen: Date.now() }));
+  });
+  it('a non-member cannot write presence', async () => {
+    const db = env.authenticatedContext('eve').database();
+    await assertFails(set(ref(db, 'rooms/R1/presence/eve'), { online: true, lastSeen: Date.now() }));
+  });
+  it('a member cannot write another user presence', async () => {
+    const db = env.authenticatedContext('alice').database();
+    await assertFails(set(ref(db, 'rooms/R1/presence/bob'), { online: true, lastSeen: Date.now() }));
   });
 });

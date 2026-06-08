@@ -1,5 +1,5 @@
 import type { Card, CardColor } from './cards';
-import type { GameState, GamePhase, PendingDraw, DuelState, BombResponse } from './state';
+import type { GameState, GamePhase, PendingDraw, DuelState, BombResponse, LogEntry } from './state';
 
 export interface PublicPlayer {
   id: string; name: string; isBot: boolean; connected: boolean;
@@ -19,7 +19,7 @@ export interface PublicView {
   goAgain: boolean;
   drawCount: number;
   winnerId: string | null;
-  log: string;
+  log: LogEntry[];
   you: { id: string; hand: Card[] } | null;
 }
 

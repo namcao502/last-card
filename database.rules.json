@@ -10,14 +10,14 @@
         "participants": { ".write": false },
         "presence": {
           "$uid": {
-            ".write": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
             ".validate": "newData.hasChildren(['online','lastSeen'])"
           }
         },
         "chat": {
           "$msgId": {
             ".write": "auth != null && !data.exists() && newData.child('uid').val() == auth.uid && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
-            ".validate": "newData.hasChildren(['uid','name','kind','body','ts']) && newData.child('uid').isString() && newData.child('body').isString() && newData.child('body').val().length <= 280 && newData.child('ts').isNumber() && (newData.child('kind').val() == 'text' || newData.child('kind').val() == 'emote')"
+            ".validate": "newData.hasChildren(['uid','name','kind','body','ts']) && newData.child('uid').isString() && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('body').isString() && newData.child('body').val().length <= 280 && newData.child('ts').isNumber() && (newData.child('kind').val() == 'text' || newData.child('kind').val() == 'emote')"
           }
         }
       }

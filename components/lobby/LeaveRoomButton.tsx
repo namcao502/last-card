@@ -31,7 +31,7 @@ export function LeaveRoomButton({ roomId, canBecomeAudience = true }: { roomId: 
             <h3 className="text-lg font-bold">{STRINGS.leave.title}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{STRINGS.leave.note}</p>
             <div className="mt-5 flex flex-col gap-2">
-              <Button disabled={busy} onClick={leave} className="bg-uno-red text-white hover:bg-uno-red/90">{STRINGS.leave.leaveRoom}</Button>
+              <Button disabled={busy} onClick={leave} className="bg-lc-red text-white hover:bg-lc-red/90">{STRINGS.leave.leaveRoom}</Button>
               {canBecomeAudience && (
                 <Button disabled={busy} variant="outline" onClick={audience}>{STRINGS.leave.becomeAudience}</Button>
               )}

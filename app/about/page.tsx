@@ -7,7 +7,7 @@ export default function About() {
       <article className="mt-4 space-y-4">
         <h1 className="text-3xl font-black">About</h1>
         <p className="text-muted-foreground">
-          UNO Infinity is a real-time, server-authoritative multiplayer card game. A pure TypeScript
+          Last Card is a real-time, server-authoritative multiplayer card game. A pure TypeScript
           rule engine is the single source of truth; Cloud Functions validate every move against secret
           state, so hands stay private and the rules are enforced on the server - not the client.
         </p>

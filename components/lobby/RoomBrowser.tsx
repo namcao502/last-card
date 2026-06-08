@@ -46,9 +46,9 @@ export function RoomBrowser() {
           return (
             <li key={r.code} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
               <div>
-                <p className="flex items-center gap-2 text-lg font-black tracking-[0.2em] text-uno-yellow">
+                <p className="flex items-center gap-2 text-lg font-black tracking-[0.2em] text-lc-yellow">
                   {r.code}
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-normal ${inGame ? 'bg-uno-red/15 text-uno-red' : 'bg-muted text-muted-foreground'}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-normal ${inGame ? 'bg-lc-red/15 text-lc-red' : 'bg-muted text-muted-foreground'}`}>
                     {inGame ? STRINGS.browser.inGame : STRINGS.browser.inLobby}
                   </span>
                 </p>

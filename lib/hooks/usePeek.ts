@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { onValue, ref, remove } from 'firebase/database';
 import { rtdb } from '../firebase';
 import { useAuth } from '../auth';
-import type { Card } from '@uno/engine';
+import type { Card } from '@last-card/engine';
 
 export interface Peek { targetId: string; cards: Card[] }
 export function usePeek(roomId: string | null) {

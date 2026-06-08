@@ -1,4 +1,4 @@
-# Deploying UNO Infinity
+# Deploying Last Card
 
 Requires the Firebase **Blaze** (pay-as-you-go) plan (SSR App Hosting + Cloud Functions).
 
@@ -27,7 +27,7 @@ git push                                 # App Hosting builds apps/web from the 
 
 ## Why esbuild bundling for functions
 
-`@uno/engine` is consumed as TypeScript source via an npm-workspace symlink, which does NOT survive
+`@last-card/engine` is consumed as TypeScript source via an npm-workspace symlink, which does NOT survive
 `firebase deploy`'s isolated `npm ci`. esbuild inlines the engine (and `zod`) into a single
 self-contained `functions/lib/index.js`, keeping only `firebase-admin`/`firebase-functions` external.
 `firebase.json` `functions.predeploy` rebuilds the bundle on every deploy.

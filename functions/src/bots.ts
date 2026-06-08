@@ -1,5 +1,5 @@
 import { onValueWritten } from 'firebase-functions/v2/database';
-import { botChooseMove, isMoveLegal, applyMove, skipTurn, forfeit, type GameState } from '@uno/engine';
+import { botChooseMove, isMoveLegal, applyMove, skipTurn, forfeit, type GameState } from '@last-card/engine';
 import { db } from './firebase.js';
 import { applyAuthoritative } from './game.js';
 

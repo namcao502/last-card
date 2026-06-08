@@ -1,4 +1,4 @@
-import type { Card, CardKind } from '@uno/engine';
+import type { Card, CardKind } from '@last-card/engine';
 
 export interface CardInfo {
   /** Tiny label shown under the glyph on the card face ('' = none). */

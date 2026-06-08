@@ -15,7 +15,7 @@ const config = {
 const app: FirebaseApp = getApps()[0] ?? initializeApp(config);
 export const auth = getAuth(app);
 export const rtdb = getDatabase(app);
-export const functions = getFunctions(app, 'us-central1');
+export const functions = getFunctions(app, 'asia-southeast1');
 
 if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' && !(globalThis as Record<string, unknown>).__emu) {
   (globalThis as Record<string, unknown>).__emu = true;

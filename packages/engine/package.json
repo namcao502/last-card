@@ -1,5 +1,5 @@
 {
-  "name": "@uno/engine",
+  "name": "@last-card/engine",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",

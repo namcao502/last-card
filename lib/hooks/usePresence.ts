@@ -16,6 +16,12 @@ export function usePresence(roomId: string | null) {
         set(pRef, { online: true, lastSeen: Date.now() });
       });
     });
-    return () => u();
+    return () => {
+      u();
+      // Disarm the deferred handler so it can't resurrect a left/reaped room, and
+      // mark offline now (the membership rule no-ops this if we have already left).
+      onDisconnect(pRef).cancel();
+      set(pRef, { online: false, lastSeen: Date.now() }).catch(() => {});
+    };
   }, [roomId, user]);
 }

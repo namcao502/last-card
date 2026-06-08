@@ -1,6 +1,6 @@
 'use client';
 import { useRef } from 'react';
-import type { Card, CardKind } from '@uno/engine';
+import type { Card, CardKind } from '@last-card/engine';
 import { cn } from '@/lib/utils';
 import { cardInfo } from '@/lib/card-info';
 import { CARD_COLORS, COLORS, TIMING } from '@/lib/constants';
@@ -32,7 +32,7 @@ function face(card: Card): string {
   return GLYPH[card.kind] ?? '?';
 }
 
-interface UnoCardProps {
+interface GameCardProps {
   card: Card;
   selected?: boolean;
   playable?: boolean;
@@ -43,7 +43,7 @@ interface UnoCardProps {
   onInspect?: () => void;
 }
 
-export function UnoCard({ card, selected, playable, dimmed, small, onClick, onInspect }: UnoCardProps) {
+export function GameCard({ card, selected, playable, dimmed, small, onClick, onInspect }: GameCardProps) {
   const info = cardInfo(card);
   const content = (
     <span className="flex flex-col items-center justify-center leading-none">
@@ -59,8 +59,8 @@ export function UnoCard({ card, selected, playable, dimmed, small, onClick, onIn
     'relative flex items-center justify-center rounded-xl border-4 border-white font-extrabold text-white shadow-lg transition-transform',
     small ? 'h-14 w-10 text-sm' : 'h-24 w-16',
     dimmed && 'brightness-50 saturate-50',
-    selected && '-translate-y-4 outline outline-2 outline-uno-yellow',
-    playable && !selected && '-translate-y-2 ring-2 ring-uno-yellow/70',
+    selected && '-translate-y-4 outline outline-2 outline-lc-yellow',
+    playable && !selected && '-translate-y-2 ring-2 ring-lc-yellow/70',
   );
   const style = { backgroundColor: CARD_COLORS[card.color], color: card.color === 'yellow' ? COLORS.ink : COLORS.white };
 
@@ -84,7 +84,7 @@ export function UnoCard({ card, selected, playable, dimmed, small, onClick, onIn
         onPointerLeave={endPress}
         onContextMenu={(e) => { if (onInspect) { e.preventDefault(); onInspect(); } }}
         aria-label={cardLabel(card)}
-        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-uno-yellow')}
+        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-lc-yellow')}
         style={style}
       >
         {content}

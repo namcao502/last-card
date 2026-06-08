@@ -36,6 +36,10 @@ export function botChooseMove(state: GameState, botId: string): Move {
       if (isBlack(stackable)) m.chosenColor = bestColor(me.hand);
       return m;
     }
+    // x2 alone escalates the stack and passes it on without drawing (RD4). It is black,
+    // so RD19 forbids playing it as the bot's last card.
+    const mult = me.hand.length > 1 ? me.hand.find(c => c.kind === 'mult') : undefined;
+    if (mult) return { type: 'play', playerId: botId, cardIds: [mult.id] };
     if (me.hand.some(c => c.kind === 'shield')) return { type: 'shield', playerId: botId };
     if (me.hand.some(c => c.kind === 'counter')) return { type: 'counter', playerId: botId };
     const div = me.hand.find(c => c.kind === 'div');

@@ -114,6 +114,8 @@ export const STRINGS = {
     deckSuffix: 'in deck',
     playSelected: 'Play selected',
     selectHint: 'Tap a card below to select, then Play.',
+    keepCard: 'Keep card',
+    drewPlayable: 'You drew a card you can play - play it, or keep it.',
     accept: 'Accept (draw 4)',
     shield: 'Shield',
     counter: 'Counter',

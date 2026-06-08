@@ -39,6 +39,18 @@ describe('isMoveLegal (Infinity)', () => {
     const s = mk({}, [cardOf({ id: 'a', value: 5 }), cardOf({ id: 'm', color: 'black', kind: 'mult', value: 2 })]);
     expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['a', 'm'] }).ok).toBe(false);
   });
+  it('after drawing a playable card you may only play that card (or draw to keep it)', () => {
+    const s = mk({ drawnPlayable: { playerId: 'p1', cardId: 'dx' } },
+      [cardOf({ id: 'dx', color: 'red', value: 8 }), cardOf({ id: 'other', color: 'red', value: 9 })]);
+    expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['dx'] }).ok).toBe(true);
+    expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['other'] }).ok).toBe(false);
+    expect(isMoveLegal(s, { type: 'draw', playerId: 'p1' }).ok).toBe(true); // keep / pass
+  });
+  it('x2 alone is legal on a pending stack (no attached draw)', () => {
+    const s = mk({ pending: { total: 6, topValue: 4, source: 'colorDraw' } },
+      [cardOf({ id: 'm', color: 'black', kind: 'mult', value: 2 }), cardOf({ id: 'k', value: 2 })]);
+    expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['m'] }).ok).toBe(true);
+  });
   it('a draw stacks only if value >= pending top (RD6)', () => {
     const s = mk({ pending: { total: 6, topValue: 6, source: 'blackDraw' } },
       [cardOf({ id: 'd', color: 'black', kind: 'draw', value: 4 }), cardOf({ id: 'd2', color: 'black', kind: 'draw', value: 8 })]);

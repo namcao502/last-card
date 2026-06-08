@@ -39,7 +39,13 @@ function projection(state: GameState): Record<string, unknown> {
 /** Per-human hand writes for the SEPARATE /hands/{roomId} path (never under /rooms). */
 function handUpdates(state: GameState): Record<string, unknown> {
   const u: Record<string, unknown> = {};
-  for (const p of state.players) if (!p.isBot) u[p.id] = { cards: p.hand };
+  for (const p of state.players) if (!p.isBot) {
+    const entry: Record<string, unknown> = { cards: p.hand };
+    // Owner-only signal: a card just drawn that this player may play or keep (RD-draw).
+    if (state.drawnPlayable && state.drawnPlayable.playerId === p.id)
+      entry.drawnPlayableCardId = state.drawnPlayable.cardId;
+    u[p.id] = entry;
+  }
   return u;
 }
 

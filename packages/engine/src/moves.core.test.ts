@@ -15,7 +15,7 @@ function mk(over: Partial<GameState>, hands: Card[][]): GameState {
     drawPile: Array.from({ length: 40 }, (_, i) => C({ id: `d${i}`, color: 'green', value: (i % 9) + 1 })),
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
+    pending: null, duel: null, bombResponse: null, goAgain: false, drawnPlayable: null, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 
@@ -42,11 +42,43 @@ describe('applyMove - core', () => {
     expect(r.pending).toEqual<PendingDraw>({ total: 2, topValue: 2, source: 'colorDraw' });
     expect(r.turnIndex).toBe(1);
   });
+  it('drawing a playable card keeps the turn open; the player may then play it', () => {
+    const s = mk({ drawPile: [C({ id: 'dx', color: 'red', value: 8 })] }, [[C({ id: 'k', color: 'blue', value: 2 })], [], []]);
+    const drew = applyMove(s, { type: 'draw', playerId: 'p1' }); // top is red 5; red 8 is playable
+    expect(drew.drawnPlayable).toMatchObject({ playerId: 'p1', cardId: 'dx' });
+    expect(drew.turnIndex).toBe(0);                                // turn stays with p1
+    const played = applyMove(drew, { type: 'play', playerId: 'p1', cardIds: ['dx'] });
+    expect(played.discardPile.at(-1)!.id).toBe('dx');
+    expect(played.drawnPlayable).toBeNull();
+    expect(played.turnIndex).toBe(1);
+  });
+  it('after drawing a playable card, drawing again keeps it and passes the turn (no new card)', () => {
+    const s = mk({ drawPile: [C({ id: 'dx', color: 'red', value: 8 })] }, [[C({ id: 'k', color: 'blue', value: 2 })], [], []]);
+    const drew = applyMove(s, { type: 'draw', playerId: 'p1' });
+    const passed = applyMove(drew, { type: 'draw', playerId: 'p1' });
+    expect(passed.drawnPlayable).toBeNull();
+    expect(passed.turnIndex).toBe(1);
+    expect(passed.players[0].hand.map(c => c.id).sort()).toEqual(['dx', 'k']); // no extra draw
+  });
+  it('drawing an unplayable card ends the turn (no decision)', () => {
+    const s = mk({ drawPile: [C({ id: 'dy', color: 'blue', value: 9 })] }, [[C({ id: 'k', color: 'blue', value: 2 })], [], []]);
+    const drew = applyMove(s, { type: 'draw', playerId: 'p1' }); // blue 9 not playable on red 5
+    expect(drew.drawnPlayable).toBeNull();
+    expect(drew.turnIndex).toBe(1);
+  });
   it('x2 doubles the attached draw and extends the stack (RD4: 2+4+8=14)', () => {
     const pending: PendingDraw = { total: 6, topValue: 4, source: 'colorDraw' };
     const s = mk({ pending, turnIndex: 0 }, [[C({ id: 'd', color: 'black', kind: 'draw', value: 4 }), C({ id: 'm', color: 'black', kind: 'mult', value: 2 })], [], []]);
     const r = applyMove(s, { type: 'play', playerId: 'p1', cardIds: ['d', 'm'] });
     expect(r.pending!.total).toBe(14);
+    expect(r.turnIndex).toBe(1);
+  });
+  it('x2 alone (no attached draw) adds the current stack top to the total (2+4+4=10)', () => {
+    const pending: PendingDraw = { total: 6, topValue: 4, source: 'colorDraw' };
+    const s = mk({ pending, turnIndex: 0 }, [[C({ id: 'm', color: 'black', kind: 'mult', value: 2 }), C({ id: 'k', value: 3 })], [], []]);
+    const r = applyMove(s, { type: 'play', playerId: 'p1', cardIds: ['m'] });
+    expect(r.pending!.total).toBe(10);
+    expect(r.pending!.topValue).toBe(4); // unchanged: no new + card was played
     expect(r.turnIndex).toBe(1);
   });
   it('/2 halves the pending; the player draws the result (RD5: 6 -> 3)', () => {

@@ -1,5 +1,6 @@
 import { isBlack, isDraw, type Card, type CardColor } from './cards';
 import { topCard, nextActiveIndex, activePlayers, MAX_HAND, type GameState, type PlayerState, type PlayerSeed, type LogEntry } from './state';
+import { isPlayable } from './rules';
 import { classifySet, type Combo } from './combos';
 import { createRng, shuffle } from './rng';
 import type { Move } from './types';
@@ -9,6 +10,7 @@ export const clone = (s: GameState): GameState => ({
   players: s.players.map(p => ({ ...p, hand: [...p.hand] })),
   drawPile: [...s.drawPile], discardPile: [...s.discardPile],
   pending: s.pending ? { ...s.pending } : null,
+  drawnPlayable: s.drawnPlayable ? { ...s.drawnPlayable } : null,
   duel: s.duel ? { ...s.duel } : null,
   bombResponse: s.bombResponse ? { ...s.bombResponse, pending: [...s.bombResponse.pending] } : null,
   log: [...s.log],
@@ -26,6 +28,7 @@ function pushLog(s: GameState, e: Omit<LogEntry, 'seq'>): void {
 /** Advance to the next ACTIVE seat (skips eliminated players); clears per-turn flags.
  *  Duel-aware: inside a duel it toggles between the two duelists instead. */
 export function advance(s: GameState, steps = 1): void {
+  s.drawnPlayable = null;                                   // any turn change ends a post-draw decision
   if (s.phase === 'duel' && s.duel) {                       // in a duel, toggle between the two duelists
     s.duel.activeId = s.duel.activeId === s.duel.challengerId ? s.duel.opponentId : s.duel.challengerId;
     s.goAgain = false; return;
@@ -98,10 +101,20 @@ function resolveDraw(s: GameState): GameState {
     s.pending = null; s.colorLocked = false;
     if (s.phase === 'duel') return endDuel(s);   // drawing ends a duel
     advance(s, 1);
-  } else {
-    drawCards(s, p, 1);
-    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'draw', text: 'drew a card', drawCount: 1 });
+  } else if (s.drawnPlayable && s.drawnPlayable.playerId === p.id) {
+    // Second draw this turn = keep the card just drawn and pass (no new card).
+    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'draw', text: 'kept the drawn card' });
     advance(s, 1);
+  } else {
+    const before = p.hand.length;
+    drawCards(s, p, 1);
+    const drawn = p.hand.length > before ? p.hand[p.hand.length - 1] : undefined;
+    pushLog(s, { actorId: p.id, actorName: p.name, kind: 'draw', text: 'drew a card', drawCount: 1 });
+    // If the drawn card is playable, keep the turn open so the player may play it (or draw again to keep it).
+    if (drawn && p.status === 'active' && isPlayable(drawn, topCard(s), s.currentColor, s.colorLocked))
+      s.drawnPlayable = { playerId: p.id, cardId: drawn.id };
+    else
+      advance(s, 1);
   }
   return checkEnd(s);
 }
@@ -125,6 +138,7 @@ function resolveCounter(s: GameState): GameState {          // bounce pending to
 }
 
 function applyPlay(s: GameState, move: Extract<Move, { type: 'play' }>): GameState {
+  s.drawnPlayable = null;                                  // committing a play ends any post-draw decision
   const actor = s.players.find(p => p.id === move.playerId)!;
   const cards = move.cardIds.map(id => actor.hand.find(c => c.id === id)!);
   const combo = (classifySet(cards) as { ok: true; combo: Combo }).combo; // legality already validated
@@ -143,6 +157,9 @@ function applyPlay(s: GameState, move: Extract<Move, { type: 'play' }>): GameSta
     if (combo.isX2) {
       s.pending.total += (combo.draw!.value ?? 0) * 2;     // RD4: double the attached draw
       s.pending.topValue = combo.draw!.value ?? 0;
+      advance(s, 1);
+    } else if (combo.lead.kind === 'mult') {               // RD4: x2 alone doubles the current stack top (+= topValue)
+      s.pending.total += s.pending.topValue;               // topValue unchanged: no new + card was played
       advance(s, 1);
     } else if (combo.lead.kind === 'div') {                // RD5: halve, then this player draws
       s.pending.total = Math.floor(s.pending.total / 2);
@@ -221,11 +238,11 @@ function applyEffect(s: GameState, combo: Combo, move: Extract<Move, { type: 'pl
     case 'minus':
       if (move.minusDiscard) actor.hand = actor.hand.filter(c => c.color !== lead.color);
       advance(s, 1); break;
-    case 'reverseDraw': {                                    // RD13: flip + previous player draws
-      s.direction = (-s.direction) as 1 | -1;
-      const victim = s.players[nextActiveIndex(s, s.turnIndex, 1)];
-      drawCards(s, victim, lead.value ?? 0);
-      advance(s, 2); break;                                  // skip the victim
+    case 'reverseDraw': {                                    // RD13: flip direction, then open a defendable +draw
+      s.direction = (-s.direction) as 1 | -1;                // stack is aimed at the previous player (the new "next")
+      s.pending = { total: lead.value ?? 0, topValue: lead.value ?? 0, source: 'blackDraw' };
+      s.chainId++;                                           // a fresh draw chain begins
+      advance(s, 1); break;                                  // responding to the stack IS that player's turn
     }
     case 'duel':                                             // RD11: enter 1v1; color chosen upfront
       s.phase = 'duel';

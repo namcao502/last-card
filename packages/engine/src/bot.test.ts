@@ -16,7 +16,7 @@ function mk(over: Partial<GameState>, hand: Card[]): GameState {
     drawPile: [C({ id: 'd', color: 'blue', value: 1 })],
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
+    pending: null, duel: null, bombResponse: null, goAgain: false, drawnPlayable: null, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 
@@ -50,5 +50,24 @@ describe('botChooseMove', () => {
     expect(m.type === 'play' && m.cardIds).toEqual(['d6']);
     const noDraw = mk({ pending }, [C({ id: 'n', color: 'green', value: 9 })]);
     expect(botChooseMove(noDraw, 'b1').type).toBe('draw');
+  });
+  it('plays x2 alone against a stack when no draw qualifies (RD4)', () => {
+    const pending: PendingDraw = { total: 6, topValue: 6, source: 'blackDraw' };
+    // no draw >= 6, but holds a mult plus a spare so x2 is not the last card (RD19)
+    const s = mk({ pending }, [C({ id: 'm', color: 'black', kind: 'mult', value: 2 }), C({ id: 'k', value: 3 })]);
+    const m = botChooseMove(s, 'b1');
+    expect(m.type === 'play' && m.cardIds).toEqual(['m']);
+    expect(isMoveLegal(s, m).ok).toBe(true);
+  });
+  it('will not play x2 as its last card against a stack (RD19) - draws instead', () => {
+    const pending: PendingDraw = { total: 6, topValue: 6, source: 'blackDraw' };
+    const s = mk({ pending }, [C({ id: 'm', color: 'black', kind: 'mult', value: 2 })]); // mult only
+    expect(botChooseMove(s, 'b1').type).toBe('draw');
+  });
+  it('plays the card it just drew when it is playable', () => {
+    const s = mk({ drawnPlayable: { playerId: 'b1', cardId: 'dx' } },
+      [C({ id: 'dx', color: 'red', value: 8 }), C({ id: 'k', color: 'blue', value: 2 })]); // top is red 5
+    const m = botChooseMove(s, 'b1');
+    expect(m.type === 'play' && m.cardIds).toEqual(['dx']);
   });
 });

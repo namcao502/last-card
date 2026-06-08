@@ -17,6 +17,7 @@ export interface PublicView {
   duel: DuelState | null;
   bombResponse: BombResponse | null;
   goAgain: boolean;
+  drawnPlayable: { playerId: string; cardId: string } | null; // owner-only: a just-drawn card you may play or keep
   drawCount: number;
   winnerId: string | null;
   log: LogEntry[];
@@ -43,6 +44,7 @@ export function redactFor(state: GameState, viewerId: string | null): PublicView
     duel: state.duel,
     bombResponse: state.bombResponse,
     goAgain: state.goAgain,
+    drawnPlayable: me && state.drawnPlayable?.playerId === me.id ? state.drawnPlayable : null,
     drawCount: state.drawPile.length,
     winnerId: state.winnerId,
     log: state.log,

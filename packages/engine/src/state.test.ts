@@ -19,10 +19,9 @@ describe('createGame', () => {
     const total = g.drawPile.length + g.discardPile.length + g.players.reduce((s, p) => s + p.hand.length, 0);
     expect(total).toBe(deckTotal(DEFAULT_CONFIG.deck));
   });
-  it('starts on a colored NUMBER card, color not black, with clean flags', () => {
+  it('starts on a colored (non-black) card with clean flags', () => {
     const g = createGame(seeds, DEFAULT_CONFIG, 'seed-1');
     const top = g.discardPile.at(-1)!;
-    expect(top.kind).toBe('number');
     expect(top.color).not.toBe('black');
     expect(g.currentColor).toBe(top.color);
     expect(g.phase).toBe('playing');

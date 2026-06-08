@@ -23,8 +23,12 @@ export function getPlayableCards(state: GameState, playerId: string): Card[] {
   const p = state.players.find(x => x.id === playerId);
   if (!p) return [];
   const top = topCard(state);
+  if (state.drawnPlayable && state.drawnPlayable.playerId === playerId) {
+    const c = p.hand.find(x => x.id === state.drawnPlayable!.cardId);
+    return c && isPlayable(c, top, state.currentColor, state.colorLocked) ? [c] : [];
+  }
   if (state.pending)
-    return p.hand.filter(c => (isDraw(c) && (c.value ?? 0) >= state.pending!.topValue) || c.kind === 'div');
+    return p.hand.filter(c => (isDraw(c) && (c.value ?? 0) >= state.pending!.topValue) || c.kind === 'div' || c.kind === 'mult');
   return p.hand.filter(c => isPlayable(c, top, state.currentColor, state.colorLocked));
 }
 
@@ -47,6 +51,11 @@ export function isMoveLegal(state: GameState, move: Move): LegalityResult {
     }
     return { ok: false, reason: 'Respond to the bomb: draw, shield, or counter' };
   }
+
+  // After drawing a playable card this turn, the only options are to play THAT card or draw again to keep it.
+  if (state.drawnPlayable && state.drawnPlayable.playerId === me.id && move.type !== 'draw'
+      && !(move.type === 'play' && move.cardIds.length === 1 && move.cardIds[0] === state.drawnPlayable.cardId))
+    return { ok: false, reason: 'You may only play the card you just drew, or draw to keep it' };
 
   if (move.type === 'draw') return { ok: true };
   if (move.type === 'shield' || move.type === 'counter') {
@@ -71,6 +80,7 @@ export function isMoveLegal(state: GameState, move: Move): LegalityResult {
   if (state.pending) {
     if (c.isX2) return (c.draw!.value ?? 0) >= state.pending.topValue
       ? { ok: true } : { ok: false, reason: 'Draw value too low to stack' };
+    if (c.kind === 'single' && c.lead.kind === 'mult') return { ok: true }; // x2 alone: doubles the current stack top
     if (c.kind === 'single' && isDraw(c.lead)) return (c.lead.value ?? 0) >= state.pending.topValue
       ? { ok: true } : { ok: false, reason: 'Draw value too low to stack' };
     if (c.kind === 'single' && c.lead.kind === 'div') return { ok: true };

@@ -15,7 +15,7 @@ function mk(over: Partial<GameState>, hands: Card[][]): GameState {
     drawPile: Array.from({ length: 40 }, (_, i) => C({ id: `d${i}`, color: 'green', value: (i % 9) + 1 })),
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
+    pending: null, duel: null, bombResponse: null, goAgain: false, drawnPlayable: null, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 
@@ -36,12 +36,15 @@ describe('special effects', () => {
     const r = applyMove(mk({}, [hand, [], []]), { type: 'play', playerId: 'p1', cardIds: ['m'], minusDiscard: true });
     expect(r.players[0].hand.map(c => c.id)).toEqual(['b1']); // red cards dumped, blue kept
   });
-  it('reverseDraw flips direction and the previous player draws value (RD13)', () => {
-    const r = applyMove(mk({}, [[C({ id: 'a', color: 'black', kind: 'reverseDraw', value: 4 }), C({ id: 'k', value: 3 })], [], []]),
-      { type: 'play', playerId: 'p1', cardIds: ['a'], chosenColor: 'red' });
-    expect(r.direction).toBe(-1);
-    expect(r.players[2].hand.length).toBe(2 + 4); // p3 (now "previous" after the flip) drew 4
-    expect(r.turnIndex).toBe(1);                  // skips the victim -> p2
+  it('reverseDraw flips direction and opens a defendable +draw at the previous player (RD13)', () => {
+    const opened = applyMove(mk({}, [[C({ id: 'a', color: 'black', kind: 'reverseDraw', value: 4 }), C({ id: 'k', value: 3 })], [], []]),
+      { type: 'play', playerId: 'p1', cardIds: ['a'] });
+    expect(opened.direction).toBe(-1);
+    expect(opened.pending).toMatchObject({ total: 4, topValue: 4 });
+    expect(opened.turnIndex).toBe(2);               // passes to p3 (previous player after the flip), not skipped
+    expect(opened.players[2].hand.length).toBe(2);  // not forced to draw - p3 may defend
+    const drew = applyMove(opened, { type: 'draw', playerId: 'p3' });
+    expect(drew.players[2].hand.length).toBe(2 + 4); // p3 chooses to absorb the 4
   });
   it('bomb opens a response phase; accepting draws 4, countering bounces 4 to the bomber (RD12)', () => {
     const s = mk({}, [

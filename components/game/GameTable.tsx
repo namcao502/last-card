@@ -27,7 +27,7 @@ const needsColor = (k: CardKind) => k === 'wild' || k === 'drawUntilColor' || k 
 
 export function GameTable({ roomId }: { roomId: string }) {
   const { meta, seats, pub, presence } = useRoom(roomId);
-  const hand = useHand(roomId);
+  const { cards: hand, drawnPlayableCardId } = useHand(roomId);
   const { peek, dismiss } = usePeek(roomId);
   const { user, nickname } = useAuth();
   usePresence(roomId);
@@ -74,7 +74,9 @@ export function GameTable({ roomId }: { roomId: string }) {
   };
 
   const clientPlayable = (c: Card): boolean => {
-    if (pub.pending) return (c.kind === 'draw' && (c.value ?? 0) >= pub.pending.topValue) || c.kind === 'div';
+    if (drawnPlayableCardId) return c.id === drawnPlayableCardId; // after a draw, only the drawn card may be played
+    if (pub.phase === 'bombResponse') return c.kind === 'shield' || c.kind === 'counter'; // respond by selecting a shield/counter
+    if (pub.pending) return (c.kind === 'draw' && (c.value ?? 0) >= pub.pending.topValue) || c.kind === 'div' || c.kind === 'mult' || c.kind === 'shield' || c.kind === 'counter';
     return isPlayable(c, pub.discardTop, pub.currentColor, pub.colorLocked);
   };
 
@@ -82,6 +84,10 @@ export function GameTable({ roomId }: { roomId: string }) {
 
   const tryPlay = () => {
     const cards = selected.map((id) => hand.find((c) => c.id === id)).filter(Boolean) as Card[];
+    // Shield / counter are played by selecting the card; the engine takes a dedicated move for them.
+    const only = cards.length === 1 ? cards[0] : null;
+    if (only?.kind === 'shield') { submit({ type: 'shield', playerId: myId }); return; }
+    if (only?.kind === 'counter') { submit({ type: 'counter', playerId: myId }); return; }
     const res = classifySet(cards);
     if (!res.ok) { toast.error(res.reason); return; }
     const lead = res.combo.lead;
@@ -105,7 +111,6 @@ export function GameTable({ roomId }: { roomId: string }) {
   };
 
   const activeOpponents = seats.filter((s) => s.id !== myId && s.status === 'active');
-  const holds = (k: CardKind) => hand.some((c) => c.kind === k);
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_300px]">
@@ -205,15 +210,18 @@ export function GameTable({ roomId }: { roomId: string }) {
             {pub.phase === 'bombResponse' ? (
               <>
                 <Button onClick={() => submit({ type: 'draw', playerId: myId })}>{STRINGS.game.accept}</Button>
-                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>{STRINGS.game.shield}</Button>}
-                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>{STRINGS.game.counter}</Button>}
+                <Button disabled={selected.length === 0} onClick={tryPlay}>{STRINGS.game.playSelected}</Button>
               </>
             ) : pub.pending ? (
               <>
                 <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>Draw {pub.pending.total}</Button>
-                {holds('shield') && <Button variant="outline" onClick={() => submit({ type: 'shield', playerId: myId })}>{STRINGS.game.shield}</Button>}
-                {holds('counter') && <Button variant="outline" onClick={() => submit({ type: 'counter', playerId: myId })}>{STRINGS.game.counter}</Button>}
-                {selected.length > 0 && <Button onClick={tryPlay}>{STRINGS.game.playSelected}</Button>}
+                <Button disabled={selected.length === 0} onClick={tryPlay}>{STRINGS.game.playSelected}</Button>
+              </>
+            ) : drawnPlayableCardId ? (
+              <>
+                <Button disabled={selected.length === 0} onClick={tryPlay}>{STRINGS.game.playSelected}</Button>
+                <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>{STRINGS.game.keepCard}</Button>
+                <span className="text-sm text-muted-foreground">{STRINGS.game.drewPlayable}</span>
               </>
             ) : (
               <>

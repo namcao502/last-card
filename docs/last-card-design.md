@@ -169,13 +169,13 @@ to the bomber's chosen color, and play resumes from the player after the bomber.
 sub-phase (no timer); each responder acts "on their turn" within the phase, so it fits the chosen model.
 State: `bombResponse: { bomberId; pending: string[]; bomberDraw: number; endColor: CardColor } | null`.
 
-**RD13 - reverseDraw (+4/+10).** Flips `direction`; the player immediately behind (the previous player
-in the new direction) draws `value` and is skipped; play continues from the current player in the new
-direction. **First-cut simplification:** reverseDraw is a **standalone effect, not a stack extender** -
-it cannot be played onto an active `pending` draw stack (the source's "stackable if prior draw value <=
-this" is deferred), and it is never playable on a bomb (moot, since it cannot stack). In 2-player games
-the direction flip plus skip returns the turn to the player who played it (they effectively go again);
-this is the intended behavior and is covered by a dedicated test.
+**RD13 - reverseDraw (+4/+10).** Flips `direction`, then opens a `pending` draw stack of `value` aimed
+at the previous player (the new "next" in the flipped direction). That player answers it like any draw
+stack - draw the running total, shield, counter, `/2`, or stack a `+draw` of equal or higher value - so
+the response IS their turn (they are not separately skipped). **Still deferred:** reverseDraw cannot
+itself be played onto an already-active stack to flip mid-chain (the source's "stackable if prior draw
+value <= this"), and it is never playable on a bomb. In 2-player games the flip aims the stack at the
+only opponent and, once answered, returns the turn to the player who played it.
 
 **RD14 - recycle.** Re-applies the effect of the current top discard card as if this player had played a
 copy of it (the recycling player supplies any required `chosenColor`/`targetId`). Illegal if the top is

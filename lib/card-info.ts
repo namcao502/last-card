@@ -36,6 +36,6 @@ export function cardInfo(card: Card): CardInfo {
   if (card.kind === 'draw')
     return { short: `Draw ${card.value}`, name: `Draw +${card.value}`, effect: 'Start or extend a draw stack. The next player draws the running total unless they respond.' };
   if (card.kind === 'reverseDraw')
-    return { short: `Rev +${card.value}`, name: `Reverse draw +${card.value}`, effect: 'Flip direction and make the previous player draw.' };
+    return { short: `Rev +${card.value}`, name: `Reverse draw +${card.value}`, effect: 'Flip direction and open a draw stack the previous player must answer (draw, shield, counter, /2, or stack).' };
   return KIND_INFO[card.kind];
 }

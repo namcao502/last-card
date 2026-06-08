@@ -41,6 +41,7 @@ export interface GameState {
   duel: DuelState | null;
   bombResponse: BombResponse | null;
   goAgain: boolean;
+  drawnPlayable: { playerId: string; cardId: string } | null; // a card just drawn that may be played, or kept by drawing again
   winnerId: string | null;
   seed: string;
   log: LogEntry[];
@@ -61,10 +62,11 @@ export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string
   for (let r = 0; r < config.startingHandSize; r++)
     for (const p of players) p.hand.push(deck[idx++]);
 
-  // Start on the first plain colored NUMBER card (no special on the opening discard).
+  // Start on a random colored (non-black) card. A black opener would leave the active color
+  // undefined, so it is skipped; an opening special card's effect (if any) is not applied.
   let firstIdx = idx;
-  while (firstIdx < deck.length && deck[firstIdx].kind !== 'number') firstIdx++;
-  if (firstIdx >= deck.length) throw new Error('No number card available to start the discard pile');
+  while (firstIdx < deck.length && deck[firstIdx].color === 'black') firstIdx++;
+  if (firstIdx >= deck.length) throw new Error('No colored card available to start the discard pile');
   const first = deck[firstIdx];
   const drawPile = deck.slice(idx).filter(c => c.id !== first.id);
 
@@ -72,7 +74,7 @@ export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string
     phase: 'playing', config, players,
     drawPile, discardPile: [first], currentColor: first.color, colorLocked: false,
     turnIndex: 0, direction: 1, pending: null, duel: null, bombResponse: null, goAgain: false,
-    winnerId: null, seed, log: [], chainId: 0, eventSeq: 0,
+    drawnPlayable: null, winnerId: null, seed, log: [], chainId: 0, eventSeq: 0,
   };
 }
 

@@ -10,5 +10,7 @@ export const callLeaveRoom  = httpsCallable<{ roomId: string }, { ok: boolean }>
 export const callBecomeAudience = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'becomeAudience');
 export const callReturnToLobby = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'returnToLobby');
 export const callStartGame  = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'startGame');
+export const callPauseGame  = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'pauseGame');
+export const callResumeGame = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'resumeGame');
 export const callSubmitMove = httpsCallable<{ roomId: string; move: Move }, { ok: boolean }>(functions, 'submitMove');
 export const callForceTimeout = httpsCallable<{ roomId: string }, { ok: boolean }>(functions, 'forceTimeout');

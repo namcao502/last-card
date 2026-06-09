@@ -28,6 +28,15 @@ export function botChooseMove(state: GameState, botId: string): Move {
     return { type: 'draw', playerId: botId };
   }
 
+  // Facing a draw-until-color threat: bounce with a (non-last) draw-until-color or recycle, else accept.
+  if (state.pendingUntil) {
+    const bounce = me.hand.length > 1
+      ? (me.hand.find(c => c.kind === 'drawUntilColor') ?? me.hand.find(c => c.kind === 'recycle'))
+      : undefined;
+    if (bounce) return { type: 'play', playerId: botId, cardIds: [bounce.id], chosenColor: bestColor(me.hand) };
+    return { type: 'draw', playerId: botId };
+  }
+
   // Facing a draw stack: stack a draw (smallest that qualifies), else shield/counter, else draw.
   if (state.pending) {
     const stackable = me.hand.filter(c => canStackDraw(state.pending!, c))
@@ -60,6 +69,6 @@ export function botChooseMove(state: GameState, botId: string): Move {
   if (needsColor(card)) m.chosenColor = bestColor(me.hand);
   if (TARGETED.has(card.kind)) m.targetId = weakest(state, botId)?.id;
   if (card.kind === 'gift') m.giftCardId = me.hand.find(c => c.id !== card.id)?.id;
-  if (card.kind === 'minus') m.minusDiscard = true;
+  if (card.kind === 'minus') m.minusDiscardIds = me.hand.filter(c => c.id !== card.id && c.color === card.color).map(c => c.id);
   return m;
 }

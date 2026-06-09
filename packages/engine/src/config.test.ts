@@ -7,7 +7,7 @@ describe('Infinity config', () => {
     expect(ruleConfigSchema.safeParse(DEFAULT_CONFIG).success).toBe(true);
   });
   it('deckTotal counts the default deck', () => {
-    expect(deckTotal(DEFAULT_DECK)).toBe(172); // 116 colored + 56 black
+    expect(deckTotal(DEFAULT_DECK)).toBe(180); // 124 colored + 56 black
   });
   it('mergeConfig fills missing fields (incl. deck) from defaults', () => {
     const merged = mergeConfig({ startingHandSize: 8 });

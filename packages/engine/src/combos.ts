@@ -34,13 +34,14 @@ export function classifySet(cards: Card[]): ComboResult {
     const vals = sorted.map(c => c.value!);
     if (new Set(vals).size === vals.length && consecutive(vals))
       return { ok: true, combo: { kind: 'run', cards: sorted, lead: sorted[0], finalTop: sorted[sorted.length - 1], locksColor: true, isX2: false } };
-    if (vals.length === 6) {
+    // Consecutive pairs: 3+ consecutive ranks (>= 6 cards), each appearing exactly twice.
+    if (vals.length >= 6 && vals.length % 2 === 0) {
       const ranks = [...new Set(vals)].sort((a, b) => a - b);
-      const eachTwice = ranks.length === 3 && ranks.every(r => vals.filter(v => v === r).length === 2);
+      const eachTwice = ranks.length === vals.length / 2 && ranks.every(r => vals.filter(v => v === r).length === 2);
       if (eachTwice && consecutive(ranks))
         return { ok: true, combo: { kind: 'pairsRun', cards: sorted, lead: sorted[0], finalTop: sorted[sorted.length - 1], locksColor: true, isX2: false } };
     }
-    return { ok: false, reason: 'Not a valid run or three consecutive pairs' };
+    return { ok: false, reason: 'Not a valid run or consecutive pairs (3+ pairs)' };
   }
   return { ok: false, reason: 'Invalid multi-card set' };
 }

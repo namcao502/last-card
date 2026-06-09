@@ -1,5 +1,5 @@
 import { isBlack, isDraw, type Card, type CardColor } from './cards';
-import { topCard, type GameState, type PendingDraw } from './state';
+import { topCard, recycleTarget, type GameState, type PendingDraw } from './state';
 import { classifySet } from './combos';
 import type { Move, LegalityResult } from './types';
 
@@ -40,6 +40,8 @@ export function getPlayableCards(state: GameState, playerId: string): Card[] {
     const c = p.hand.find(x => x.id === state.drawnPlayable!.cardId);
     return c && isPlayable(c, top, state.currentColor, state.colorLocked) ? [c] : [];
   }
+  if (state.pendingUntil)
+    return p.hand.filter(c => c.kind === 'drawUntilColor' || c.kind === 'recycle');
   if (state.pending)
     return p.hand.filter(c => canStackDraw(state.pending!, c) || c.kind === 'div' || c.kind === 'mult');
   return p.hand.filter(c => isPlayable(c, top, state.currentColor, state.colorLocked));
@@ -104,6 +106,12 @@ export function isMoveLegal(state: GameState, move: Move): LegalityResult {
     return { ok: false, reason: 'Only a draw, x2, or /2 may be played on a stack' };
   }
 
+  // A draw-until-color threat may only be bounced with a draw-until-color or a recycle
+  // (which copies the threat on top). Anything else must draw to accept it. The color and
+  // recycle-input checks below still apply to the two allowed plays.
+  if (state.pendingUntil && c.lead.kind !== 'drawUntilColor' && c.lead.kind !== 'recycle')
+    return { ok: false, reason: 'Respond with draw-until-color, recycle, or draw' };
+
   if (c.isX2 || c.lead.kind === 'div' || c.lead.kind === 'mult')
     return { ok: false, reason: 'x2 and /2 only play on a draw stack' };
   if (c.lead.kind === 'shield' || c.lead.kind === 'counter')
@@ -122,25 +130,44 @@ export function isMoveLegal(state: GameState, move: Move): LegalityResult {
     // RD19: gift also sheds the gifted card; you cannot empty your hand finishing on a (black) gift.
     if (me.hand.length === c.cards.length + 1) return { ok: false, reason: 'Cannot finish on a gift' };
   }
+  if (c.lead.kind === 'minus' && move.minusDiscardIds?.length) {
+    for (const id of move.minusDiscardIds) {
+      if (move.cardIds.includes(id)) return { ok: false, reason: 'Invalid card to discard' };
+      const card = me.hand.find(x => x.id === id);
+      if (!card) return { ok: false, reason: 'Card not in hand' };
+      if (card.color !== c.lead.color) return { ok: false, reason: 'Can only discard cards of the minus color' };
+    }
+  }
   if (c.lead.kind === 'bomb' && top.kind !== 'number') return { ok: false, reason: 'Bomb plays only on a number' };
   if (c.lead.kind === 'recycle') {
-    if (top.kind === 'recycle') return { ok: false, reason: 'Nothing to recycle' };
-    if (top.kind === 'number' && state.discardPile.length === 1) return { ok: false, reason: 'Nothing to recycle (opening card)' }; // RD14
-    if (needsColor(top) && !move.chosenColor) return { ok: false, reason: 'Choose a color for the recycled card' };
-    if (TARGETED.has(top.kind)) {                          // recycling a targeted card needs the same target/gift inputs
+    // See through stacked recycles to the real card the play would copy (RD14): a recycle on a
+    // recycle copies what that recycle pointed at, so it can do nothing a direct recycle couldn't.
+    const tgt = recycleTarget(state.discardPile);
+    if (!tgt) return { ok: false, reason: 'Nothing to recycle' };
+    const copied = tgt.card;
+    if (tgt.index === 0 && copied.kind === 'number' && state.discardPile.length === 1)
+      return { ok: false, reason: 'Nothing to recycle (opening card)' }; // RD14
+    if (needsColor(copied) && !move.chosenColor) return { ok: false, reason: 'Choose a color for the recycled card' };
+    if (TARGETED.has(copied.kind)) {                       // recycling a targeted card needs the same target/gift inputs
       const t = state.players.find(p => p.id === move.targetId);
       if (!t || t.status !== 'active' || t.id === me.id) return { ok: false, reason: 'Choose a valid opponent for the recycled card' };
-      if (top.kind === 'gift') {
+      if (copied.kind === 'gift') {
         if (!move.giftCardId || !me.hand.find(x => x.id === move.giftCardId)) return { ok: false, reason: 'Choose a card to gift' };
         // RD19: recycle is black; a recycled gift also sheds the gifted card -> mustn't empty the hand.
         if (me.hand.length === c.cards.length + 1) return { ok: false, reason: 'Cannot finish on a recycled gift' };
       }
     }
-    // RD19: a recycled minus that dumps every remaining card would empty the hand on a (black) recycle.
-    if (top.kind === 'minus' && move.minusDiscard) {
-      const after = me.hand.filter(x => !move.cardIds.includes(x.id)); // hand after the recycle leaves
-      if (after.length > 0 && after.every(x => x.color === top.color))
-        return { ok: false, reason: 'Cannot empty your hand on a recycled minus' };
+    // A recycled minus only dumps cards of the copied minus's color; RD19: recycle is black, so the
+    // play (recycle + chosen dumps) must not empty your hand.
+    if (copied.kind === 'minus' && move.minusDiscardIds?.length) {
+      for (const id of move.minusDiscardIds) {
+        if (move.cardIds.includes(id)) return { ok: false, reason: 'Invalid card to discard' };
+        const card = me.hand.find(x => x.id === id);
+        if (!card) return { ok: false, reason: 'Card not in hand' };
+        if (card.color !== copied.color) return { ok: false, reason: 'Can only discard cards of the minus color' };
+      }
+      const after = me.hand.filter(x => !move.cardIds.includes(x.id) && !move.minusDiscardIds!.includes(x.id));
+      if (after.length === 0) return { ok: false, reason: 'Cannot empty your hand on a recycled minus' };
     }
   }
   return { ok: true };

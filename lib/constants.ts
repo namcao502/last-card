@@ -128,6 +128,12 @@ export const STRINGS = {
     historyTitle: 'Game history',
     emptyHistory: 'No moves yet.',
     drawChain: 'Draw chain',
+    autoDrawing: 'No playable card - drawing for you...',
+    notPlayable: 'That card cannot be played on the current card.',
+    pause: 'Pause',
+    resume: 'Resume',
+    pausedTitle: 'Game paused',
+    pausedByHost: 'The host paused the game. Hang tight - the turn timer is frozen.',
   },
   roundEnd: {
     gameOver: 'Game over',

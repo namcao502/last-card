@@ -4,8 +4,8 @@ import { buildDeck, cardPoints, DEFAULT_DECK, isBlack, isDraw } from './cards';
 describe('buildDeck (Infinity, config-driven)', () => {
   const deck = buildDeck(DEFAULT_DECK);
   it('produces the expected colored counts', () => {
-    // numberPerColor=2 over 10 ranks over 4 colors = 80
-    expect(deck.filter(c => c.kind === 'number').length).toBe(80);
+    // numberPerColor=2 over 11 ranks (0-10) over 4 colors = 88
+    expect(deck.filter(c => c.kind === 'number').length).toBe(88);
     expect(deck.filter(c => c.kind === 'skip').length).toBe(8);     // 2/color
     expect(deck.filter(c => c.kind === 'minus').length).toBe(4);    // 1/color
     expect(deck.filter(c => c.kind === 'playAgain').length).toBe(8);

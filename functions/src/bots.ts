@@ -1,7 +1,9 @@
 import { onValueWritten } from 'firebase-functions/v2/database';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { botChooseMove, isMoveLegal, applyMove, skipTurn, forfeit, type GameState } from '@last-card/engine';
 import { db } from './firebase.js';
-import { applyAuthoritative } from './game.js';
+import { requireHuman } from './auth.js';
+import { applyAuthoritative, TURN_MS } from './game.js';
 
 const ACTIONABLE = ['playing', 'duel', 'bombResponse'];
 const DISCONNECT_MS = 30000; // grace to reconnect before being moved to the audience
@@ -13,18 +15,18 @@ function activeIdOf(s: GameState): string | undefined {
     : s.players[s.turnIndex]?.id;
 }
 
-/**
- * Fires whenever the active turn changes. Bots play after a short delay.
- * Online humans are left to the client-enforced turn timer (forceTimeout).
- * Offline humans are skipped (no draw) while within their reconnect window, and
- * moved to the audience once they have been gone for 30s. All paths run through
- * the same transactional applyAuthoritative as human moves.
- */
-export const driveBots = onValueWritten('rooms/{roomId}/public/turnId', async (event) => {
-  const roomId = event.params.roomId;
-  const turnId = event.data.after.val() as string | null;
-  if (!turnId) return;
+const isPaused = async (roomId: string): Promise<boolean> =>
+  (await db.ref(`rooms/${roomId}/meta/paused`).get()).val() === true;
 
+/**
+ * Drive the player on turn once: bots play after a short delay; online humans are left to the
+ * client-enforced turn timer (forceTimeout); offline humans are skipped (no draw) within their
+ * reconnect window and moved to the audience after 30s. All paths run through the same
+ * transactional applyAuthoritative as human moves. No-ops while the game is paused (re-checked
+ * after each delay so an in-flight bot move / forfeit cannot land during a pause).
+ */
+export async function driveTurnOnce(roomId: string, turnId: string): Promise<void> {
+  if (await isPaused(roomId)) return;
   const phase = (await db.ref(`rooms/${roomId}/meta/phase`).get()).val();
   if (!ACTIONABLE.includes(phase)) return;
 
@@ -33,6 +35,7 @@ export const driveBots = onValueWritten('rooms/{roomId}/public/turnId', async (e
   // --- Bot: play after a short pacing delay -------------------------------
   if (seat?.isBot === true) {
     await new Promise((r) => setTimeout(r, 900));
+    if (await isPaused(roomId)) return;                    // host paused during the pacing delay
     await applyAuthoritative(roomId, (state) => {
       if (!ACTIONABLE.includes(state.phase) || activeIdOf(state) !== turnId) return undefined;
       const move = botChooseMove(state, turnId);
@@ -46,6 +49,7 @@ export const driveBots = onValueWritten('rooms/{roomId}/public/turnId', async (e
   if ((await presenceRef.get()).val()?.online !== false) return; // online -> client handles it
 
   await new Promise((r) => setTimeout(r, 2000)); // grace for brief blips / disconnect on own turn
+  if (await isPaused(roomId)) return;            // host paused during the grace -> no skip / forfeit
   const presence = (await presenceRef.get()).val();
   if (presence?.online !== false) return;        // reconnected during the grace
 
@@ -54,4 +58,41 @@ export const driveBots = onValueWritten('rooms/{roomId}/public/turnId', async (e
     if (!ACTIONABLE.includes(state.phase) || activeIdOf(state) !== turnId) return undefined;
     return offlineMs >= DISCONNECT_MS ? forfeit(state, turnId) : skipTurn(state);
   });
+}
+
+/** Fires whenever the active turn changes. */
+export const driveBots = onValueWritten('rooms/{roomId}/public/turnId', async (event) => {
+  const turnId = event.data.after.val() as string | null;
+  if (!turnId) return;
+  await driveTurnOnce(event.params.roomId, turnId);
+});
+
+/** Host pauses the game: freeze the turn timer (clear the deadline) and stop all auto-driving. */
+export const pauseGame = onCall(async (req) => {
+  const uid = requireHuman(req.auth);
+  const roomId = String(req.data?.roomId ?? '');
+  const meta = (await db.ref(`rooms/${roomId}/meta`).get()).val();
+  if (!meta) throw new HttpsError('not-found', 'Room not found');
+  if (meta.hostId !== uid) throw new HttpsError('permission-denied', 'Only the host may pause');
+  if (!ACTIONABLE.includes(meta.phase)) throw new HttpsError('failed-precondition', 'No game in progress');
+  await db.ref(`rooms/${roomId}`).update({ 'meta/paused': true, 'public/turnDeadline': null });
+  return { ok: true };
+});
+
+/** Host resumes: clear the flag, re-stamp a fresh deadline, and re-kick the current turn driver
+ *  (driveBots only fires on a turnId change, so a bot / offline player on turn would otherwise stall). */
+export const resumeGame = onCall(async (req) => {
+  const uid = requireHuman(req.auth);
+  const roomId = String(req.data?.roomId ?? '');
+  const meta = (await db.ref(`rooms/${roomId}/meta`).get()).val();
+  if (!meta) throw new HttpsError('not-found', 'Room not found');
+  if (meta.hostId !== uid) throw new HttpsError('permission-denied', 'Only the host may resume');
+  if (meta.paused !== true) return { ok: true };
+  await db.ref(`rooms/${roomId}`).update({
+    'meta/paused': false,
+    'public/turnDeadline': ACTIONABLE.includes(meta.phase) ? Date.now() + TURN_MS : null,
+  });
+  const turnId = (await db.ref(`rooms/${roomId}/public/turnId`).get()).val() as string | null;
+  if (turnId) await driveTurnOnce(roomId, turnId);
+  return { ok: true };
 });

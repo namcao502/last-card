@@ -123,11 +123,9 @@ const SECTIONS: { title: string; items: RuleItem[] }[] = [
 function RuleCards({ cards }: { cards?: Card[] }) {
   if (!cards?.length) return null;
   return (
-    <div className="flex min-w-24 shrink-0 items-center -space-x-3 sm:min-w-32">
+    <div className="flex shrink-0 items-center -space-x-4">
       {cards.slice(0, 4).map((card) => (
-        <div key={card.id} className="scale-90">
-          <GameCard card={card} small />
-        </div>
+        <GameCard key={card.id} card={card} />
       ))}
     </div>
   );
@@ -145,7 +143,7 @@ export default function Rules() {
             <h2 className="text-xl font-bold">{s.title}</h2>
             <dl className="mt-3 space-y-3">
               {s.items.map((item) => (
-                <div key={item.name} className="flex gap-3 rounded-lg border bg-card p-3">
+                <div key={item.name} className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
                   <RuleCards cards={item.cards} />
                   <div className="min-w-0">
                     <dt className="font-semibold">{item.name}</dt>

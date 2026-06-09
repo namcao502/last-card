@@ -12,7 +12,7 @@ import { normalize, sanitize } from './serde.js';
 /** Phases in which a player must act, and therefore the turn timer runs. */
 const ACTIONABLE_PHASES = ['playing', 'duel', 'bombResponse'];
 /** Seconds a player has to act before the safe default (draw) is forced. */
-export const TURN_MS = 15000;
+export const TURN_MS = 30000;
 
 /** Room-scoped projection (meta/phase, public, seats/*). Hands are written separately. */
 function projection(state: GameState): Record<string, unknown> {
@@ -24,7 +24,7 @@ function projection(state: GameState): Record<string, unknown> {
       turnId: pub.turnId, direction: pub.direction, pending: pub.pending, duel: pub.duel,
       bombResponse: pub.bombResponse, goAgain: pub.goAgain, drawCount: pub.drawCount,
       winnerId: pub.winnerId, log: pub.log,
-      // Fresh 15s deadline after every committed action; cleared outside actionable phases.
+      // Fresh 30s deadline after every committed action; cleared outside actionable phases.
       turnDeadline: ACTIONABLE_PHASES.includes(state.phase) ? Date.now() + TURN_MS : null,
     },
   };
@@ -127,6 +127,8 @@ export const submitMove = onCall(async (req) => {
   const roomId = String(req.data?.roomId ?? '');
   const move = req.data?.move as Move;
   if (!move || move.playerId !== uid) throw new HttpsError('permission-denied', 'You may only move for yourself');
+  if ((await db.ref(`rooms/${roomId}/meta/paused`).get()).val() === true)
+    throw new HttpsError('failed-precondition', 'Game is paused');
 
   let reason = 'Move rejected';
   let eyeTarget: string | null = null;                     // set when an Eye is played

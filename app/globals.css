@@ -56,6 +56,21 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@theme inline {
+  /* Game table animations: active-player glow + draw-stack badge pop. */
+  --animate-badge-bump: badge-bump 0.3s ease-out;
+  --animate-turn-glow: turn-glow 1.6s ease-in-out infinite;
+  @keyframes badge-bump {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.28); }
+    100% { transform: scale(1); }
+  }
+  @keyframes turn-glow {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-lc-yellow), transparent 35%); }
+    50% { box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-lc-yellow), transparent 78%); }
+  }
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

@@ -23,11 +23,11 @@ export type CardColor = 'red' | 'green' | 'blue' | 'yellow' | 'black'; // black 
 
 export type CardKind =
   // colored
-  | 'number'        // value 0-9
+  | 'number'        // value 0-10
   | 'draw'          // colored +2/+4 (value) OR black +2/+4/+6/+8/+10 (value); color distinguishes
   | 'playAgain'     // colored: play again, next card must match this color or be another playAgain
   | 'skip'          // colored: next player loses a turn
-  | 'minus'         // colored: optionally discard all same-color cards from hand
+  | 'minus'         // colored: optionally discard chosen same-color cards from hand
   // black / colorless
   | 'mult'          // x2  : double the attached draw card's contribution (played WITH a draw)
   | 'div'           // /2  : halve the pending draw, then draw it
@@ -116,7 +116,7 @@ export type Move =
   | { type: 'play'; playerId: string; cardIds: string[];   // 1 card, or a pair/run/3-pairs set, or [draw,x2]
       chosenColor?: CardColor; targetId?: string;           // targetId for duel/eye/swap/steal/gift
       giftCardId?: string;                                  // which card to gift
-      minusDiscard?: boolean }                              // for minus: also dump same-color cards
+      minusDiscardIds?: string[] }                          // for minus: which same-color cards to dump
   | { type: 'draw'; playerId: string }                      // draw 1 (turn passes), or resolve a pending stack
   | { type: 'shield'; playerId: string }
   | { type: 'counter'; playerId: string };
@@ -124,8 +124,9 @@ export type Move =
 ```
 
 **RD3 - Multi-card plays.** `cardIds` may be: a single card; a **pair** (2 identical color+number); a
-**run** of 3+ consecutive numbers, same color (e.g. 6-7-8); or **three consecutive pairs**, same color
-(6-6-7-7-8-8). The first card of the set must be legally playable on the current top; the rest must
+**run** of 3+ consecutive numbers, same color (e.g. 6-7-8); or **consecutive pairs** - 3+ consecutive
+ranks each twice, same color (6-6-7-7-8-8, or 6-6-7-7-8-8-9-9). The first card of the set must be
+legally playable on the current top; the rest must
 form the valid pattern. Runs and 3-consecutive-pairs **lock the color** (`colorLocked=true`): the next
 player must play `currentColor` (or a black card). Numbers do not wrap (9 is the top; no 9-0-1). Pairs
 alone do not lock color.
@@ -153,8 +154,9 @@ the card's color; their next play must match that color or be another `playAgain
 
 **RD9 - skip.** Advances the turn by 2 (next player loses their turn).
 
-**RD10 - minus (-#).** Colored. On play, if `minusDiscard` is true, all cards in hand sharing the
-minus card's color are discarded (no effects triggered). Turn passes.
+**RD10 - minus (-#).** Colored. On play, the cards listed in `minusDiscardIds` are discarded from the
+hand (no effects triggered); legality requires each to be in hand and share the minus card's color. The
+player may dump none, some, or all of that color. Turn passes.
 
 **RD11 - duel (+4T).** Enters `phase:'duel'` with `pending.total=4` on the targeted opponent. Turns
 alternate only between challenger and opponent; both may stack draws / x2 / /2 / shield / counter. The
@@ -180,9 +182,12 @@ itself be played onto an already-active stack to flip mid-chain (the source's "s
 value <= this"), and it is never playable on a bomb. In 2-player games the flip aims the stack at the
 only opponent and, once answered, returns the turn to the player who played it.
 
-**RD14 - recycle.** Re-applies the effect of the current top discard card as if this player had played a
-copy of it (the recycling player supplies any required `chosenColor`/`targetId`). Illegal if the top is
-itself a recycle or has no effect (e.g. the initial deal card before any play).
+**RD14 - recycle.** Re-applies the effect of the copied discard card as if this player had played a copy
+of it (the recycling player supplies any required `chosenColor`/`targetId`). The copied card is resolved
+by `recycleTarget` (state.ts): the nearest non-recycle card beneath the top, **seeing through** stacked
+recycles - so recycle-on-recycle copies what the lower recycle pointed at and can never re-enter
+`applyRecycle` (no infinite recursion). Illegal only when there is no real card to copy (e.g. the lone
+opening deal card).
 
 **RD15 - eye.** Server-mediated: the server returns a one-time snapshot of `targetId`'s hand to the
 caller only (callable return value / short-lived owner-only node), never a persistent readable path.
@@ -192,8 +197,12 @@ Illegal while a `pending` stack exists. Turn passes.
 server-chosen random card from `targetId`. `gift` moves `giftCardId` from the caller to `targetId`.
 All pass the turn after resolving; illegal while a `pending` stack exists.
 
-**RD17 - drawUntilColor.** The next player draws cards until they draw one of `chosenColor`, then loses
-their turn. Illegal while a `pending` stack exists.
+**RD17 - drawUntilColor.** Opens a defendable `pendingUntil = { color }` threat and passes to the next
+player instead of resolving immediately. That player may bounce it by playing their own `drawUntilColor`
+(new color) or a `recycle` that copies it (new color), re-aiming `pendingUntil` at the following player;
+the threat chains until someone accepts. Accepting (a `draw` move, or a timeout/disconnect default) makes
+the player draw until `chosenColor`, then they lose their turn. RD19 forbids bouncing with a last (black)
+card. Illegal while a `pending` stack exists.
 
 **RD18 - Win condition.** First player to empty their hand wins (`firstToEmpty`, single round in the
 first cut). You cannot "go out" if you are instead forced to resolve a pending draw. Points-target
@@ -223,7 +232,7 @@ mechanics are core, not toggles). Proposed default deck counts (tunable; validat
 
 | Card | Count | | Card | Count |
 |------|-------|-|------|-------|
-| number 0-9 (per color, 2 each) | 80 | | black +2/+4/+6/+8/+10 (2 each) | 10 |
+| number 0-10 (per color, 2 each) | 88 | | black +2/+4/+6/+8/+10 (2 each) | 10 |
 | colored +2 (2/color) | 8 | | x2 / /2 | 4 / 4 |
 | colored +4 (2/color) | 8 | | duel +4T / bomb ++4 | 2 / 2 |
 | playAgain (2/color) | 8 | | reverseDraw +4 / +10 | 2 / 2 |

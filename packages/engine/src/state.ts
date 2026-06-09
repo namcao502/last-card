@@ -12,6 +12,8 @@ export interface PlayerState {
   hand: Card[];
 }
 export interface PendingDraw { total: number; topValue: number; source: 'colorDraw' | 'blackDraw' }
+/** A draw-until-color threat awaiting the next player's response (bounce or accept). */
+export interface PendingUntil { color: CardColor }
 export interface DuelState { challengerId: string; opponentId: string; activeId: string }
 export interface BombResponse { bomberId: string; pending: string[]; bomberDraw: number; endColor: CardColor }
 
@@ -25,6 +27,8 @@ export interface LogEntry {
   cards?: Card[];         // cards played (kind 'play')
   drawCount?: number;     // cards drawn (kind 'draw')
   stackId?: number;       // present -> part of a draw-stack chain (grouped in the UI)
+  detail?: boolean;       // an indented consequence sub-line (no actor name / glyphs in the UI)
+  chosenColor?: CardColor; // a color the play set/chose -> UI shows a color chip
 }
 
 export interface GameState {
@@ -38,6 +42,7 @@ export interface GameState {
   turnIndex: number;
   direction: 1 | -1;
   pending: PendingDraw | null;
+  pendingUntil: PendingUntil | null;   // a draw-until-color threat the player on turn must answer
   duel: DuelState | null;
   bombResponse: BombResponse | null;
   goAgain: boolean;
@@ -73,12 +78,20 @@ export function createGame(seeds: PlayerSeed[], config: RuleConfig, seed: string
   return {
     phase: 'playing', config, players,
     drawPile, discardPile: [first], currentColor: first.color, colorLocked: false,
-    turnIndex: 0, direction: 1, pending: null, duel: null, bombResponse: null, goAgain: false,
+    turnIndex: 0, direction: 1, pending: null, pendingUntil: null, duel: null, bombResponse: null, goAgain: false,
     drawnPlayable: null, winnerId: null, seed, log: [], chainId: 0, eventSeq: 0,
   };
 }
 
 export const topCard = (s: GameState): Card => s.discardPile[s.discardPile.length - 1];
+
+/** The card a recycle on top of `discardPile` would copy: the nearest non-recycle card below the
+ *  top, seeing through any stacked recycles. Returns null if there is no real card to copy. */
+export function recycleTarget(discardPile: Card[]): { card: Card; index: number } | null {
+  let j = discardPile.length - 1;                            // the card the recycle is played onto
+  while (j >= 0 && discardPile[j].kind === 'recycle') j--;   // skip stacked recycles
+  return j >= 0 ? { card: discardPile[j], index: j } : null;
+}
 export const currentPlayer = (s: GameState): PlayerState => s.players[s.turnIndex];
 export const activePlayers = (s: GameState): PlayerState[] => s.players.filter(p => p.status === 'active');
 

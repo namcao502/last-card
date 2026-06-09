@@ -22,6 +22,15 @@ describe('classifySet', () => {
     const r = classifySet([num('a', 'red', 6), num('b', 'red', 6), num('c', 'red', 7), num('d', 'red', 7), num('e', 'red', 8), num('f', 'red', 8)]);
     expect(r.ok && r.combo.kind).toBe('pairsRun');
   });
+  it('four consecutive pairs 6-6-7-7-8-8-9-9 (3+ pairs allowed)', () => {
+    const r = classifySet([num('a', 'red', 6), num('b', 'red', 6), num('c', 'red', 7), num('d', 'red', 7),
+      num('e', 'red', 8), num('f', 'red', 8), num('g', 'red', 9), num('h', 'red', 9)]);
+    expect(r.ok && r.combo.kind).toBe('pairsRun');
+    expect(r.ok && r.combo.finalTop.value).toBe(9);
+  });
+  it('rejects two pairs 6-6-7-7 (needs 3+ pairs)', () => {
+    expect(classifySet([num('a', 'red', 6), num('b', 'red', 6), num('c', 'red', 7), num('d', 'red', 7)]).ok).toBe(false);
+  });
   it('x2 combo = one draw + one mult', () => {
     const draw: Card = { id: 'd', color: 'black', kind: 'draw', value: 4 };
     const mult: Card = { id: 'm', color: 'black', kind: 'mult', value: 2 };

@@ -1,5 +1,5 @@
 import type { Card, CardColor } from './cards';
-import type { GameState, GamePhase, PendingDraw, DuelState, BombResponse, LogEntry } from './state';
+import { recycleTarget, type GameState, type GamePhase, type PendingDraw, type PendingUntil, type DuelState, type BombResponse, type LogEntry } from './state';
 
 export interface PublicPlayer {
   id: string; name: string; isBot: boolean; connected: boolean;
@@ -9,11 +9,13 @@ export interface PublicView {
   phase: GamePhase;
   players: PublicPlayer[];
   discardTop: Card;
+  recycleCopies: Card | null;   // the card a recycle played now would copy (sees through recycles)
   currentColor: CardColor;
   colorLocked: boolean;
   turnId: string;
   direction: 1 | -1;
   pending: PendingDraw | null;
+  pendingUntil: PendingUntil | null;
   duel: DuelState | null;
   bombResponse: BombResponse | null;
   goAgain: boolean;
@@ -36,11 +38,13 @@ export function redactFor(state: GameState, viewerId: string | null): PublicView
       status: p.status, handCount: p.hand.length,
     })),
     discardTop: state.discardPile[state.discardPile.length - 1],
+    recycleCopies: recycleTarget(state.discardPile)?.card ?? null,
     currentColor: state.currentColor,
     colorLocked: state.colorLocked,
     turnId,
     direction: state.direction,
     pending: state.pending,
+    pendingUntil: state.pendingUntil,
     duel: state.duel,
     bombResponse: state.bombResponse,
     goAgain: state.goAgain,

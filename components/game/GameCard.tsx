@@ -3,14 +3,8 @@ import { useRef } from 'react';
 import type { Card, CardKind } from '@last-card/engine';
 import { cn } from '@/lib/utils';
 import { cardInfo } from '@/lib/card-info';
+import { CardIcon, hasCardIcon } from '@/lib/card-icons';
 import { CARD_COLORS, COLORS, TIMING } from '@/lib/constants';
-
-const GLYPH: Partial<Record<CardKind, string>> = {
-  mult: 'x2', div: '/2', skip: 'SK', playAgain: 'AG', minus: '-',
-  duel: 'DU', bomb: 'BM', recycle: 'RC', eye: 'EY', swap: 'SW',
-  steal: 'ST', gift: 'GF', drawUntilColor: 'COL', shield: 'SH',
-  counter: 'CT', wild: '*',
-};
 
 export function cardLabel(card: Card): string {
   const color = card.color === 'black' ? 'Black' : card.color.charAt(0).toUpperCase() + card.color.slice(1);
@@ -25,11 +19,19 @@ export function cardLabel(card: Card): string {
   return names[card.kind] ?? card.kind;
 }
 
-function face(card: Card): string {
+/** Large text shown on a card that has no icon, or the corner value for draw cards. */
+function faceText(card: Card): string {
   if (card.kind === 'number') return String(card.value);
   if (card.kind === 'draw') return `+${card.value}`;
-  if (card.kind === 'reverseDraw') return `R+${card.value}`;
-  return GLYPH[card.kind] ?? '?';
+  if (card.kind === 'reverseDraw') return `+${card.value}`; // Undo2 icon conveys "reverse"; corner keeps value
+  if (card.kind === 'mult') return 'x2';
+  if (card.kind === 'minus') return '-#';
+  return '';
+}
+
+/** Cards whose value reads in the corners (numbers and draws). */
+function hasCorners(card: Card): boolean {
+  return card.kind === 'number' || card.kind === 'draw' || card.kind === 'reverseDraw';
 }
 
 interface GameCardProps {
@@ -45,24 +47,47 @@ interface GameCardProps {
 
 export function GameCard({ card, selected, playable, dimmed, small, onClick, onInspect }: GameCardProps) {
   const info = cardInfo(card);
+  const showIcon = hasCardIcon(card);
+  const value = faceText(card);
+  const corner = !small && hasCorners(card) ? value : '';
+
   const content = (
-    <span className="flex flex-col items-center justify-center leading-none">
-      <span className={small ? 'text-lg' : 'text-2xl'}>{face(card)}</span>
-      {!small && info.short && (
-        <span className="mt-0.5 px-0.5 text-center text-[8px] font-bold uppercase leading-none tracking-tight opacity-90">
-          {info.short}
-        </span>
+    <>
+      {/* Inner bevel: top highlight + bottom shade for depth (sits under the face). */}
+      <span className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_2px_1px_rgba(255,255,255,0.4),inset_0_-7px_10px_rgba(0,0,0,0.18)]" />
+      {corner && (
+        <>
+          <span className="absolute left-1.5 top-1 text-xs font-black leading-none">{corner}</span>
+          <span className="absolute bottom-1 right-1.5 rotate-180 text-xs font-black leading-none">{corner}</span>
+        </>
       )}
-    </span>
+      <span className="flex flex-col items-center justify-center gap-0.5 leading-none">
+        {showIcon ? (
+          <CardIcon card={card} className={small ? 'h-5 w-5' : 'h-9 w-9'} />
+        ) : (
+          <span className={small ? 'text-lg' : 'text-3xl'}>{value}</span>
+        )}
+        {!small && showIcon && info.short && (
+          <span className="px-0.5 text-center text-[9px] font-bold uppercase tracking-tight opacity-90">{info.short}</span>
+        )}
+      </span>
+    </>
   );
+
   const base = cn(
-    'relative flex items-center justify-center rounded-xl border-4 border-white font-extrabold text-white shadow-lg transition-transform',
-    small ? 'h-14 w-10 text-sm' : 'h-24 w-16',
+    'relative flex items-center justify-center rounded-xl border-4 border-white font-extrabold text-white shadow-lg transition-transform duration-150 ease-out',
+    small ? 'h-14 w-10 text-sm' : 'h-28 w-20',
     dimmed && 'brightness-50 saturate-50',
     selected && '-translate-y-4 outline outline-2 outline-lc-yellow',
     playable && !selected && '-translate-y-2 ring-2 ring-lc-yellow/70',
   );
-  const style = { backgroundColor: CARD_COLORS[card.color], color: card.color === 'yellow' ? COLORS.ink : COLORS.white };
+
+  const fill = CARD_COLORS[card.color];
+  const style = {
+    backgroundColor: fill,
+    backgroundImage: `linear-gradient(150deg, color-mix(in oklab, ${fill}, white 14%), ${fill} 52%, color-mix(in oklab, ${fill}, black 20%))`,
+    color: card.color === 'yellow' ? COLORS.ink : COLORS.white,
+  };
 
   // Long-press to inspect, without interfering with tap-to-select.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,7 +109,7 @@ export function GameCard({ card, selected, playable, dimmed, small, onClick, onI
         onPointerLeave={endPress}
         onContextMenu={(e) => { if (onInspect) { e.preventDefault(); onInspect(); } }}
         aria-label={cardLabel(card)}
-        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-lc-yellow')}
+        className={cn(base, 'cursor-pointer focus-visible:ring-2 focus-visible:ring-lc-yellow', !selected && 'hover:-translate-y-3')}
         style={style}
       >
         {content}

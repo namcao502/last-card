@@ -124,6 +124,6 @@ describe('isMoveLegal (Infinity)', () => {
   it('cannot recycle a minus to dump the whole hand (RD19)', () => {
     const minusTop = cardOf({ id: 'mt', color: 'red', kind: 'minus', value: null });
     const s = mk({ discardPile: [minusTop], currentColor: 'red' }, [cardOf({ id: 'r', color: 'black', kind: 'recycle', value: null }), cardOf({ id: 'r3', color: 'red', value: 3 })]);
-    expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['r'], minusDiscard: true }).ok).toBe(false);
+    expect(isMoveLegal(s, { type: 'play', playerId: 'p1', cardIds: ['r'], minusDiscardIds: ['r3'] }).ok).toBe(false);
   });
 });

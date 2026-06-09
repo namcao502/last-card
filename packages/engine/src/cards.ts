@@ -3,7 +3,7 @@ export type CardKind =
   | 'number' | 'draw' | 'playAgain' | 'skip' | 'minus'
   | 'mult' | 'div' | 'duel' | 'bomb' | 'reverseDraw' | 'recycle'
   | 'eye' | 'swap' | 'steal' | 'gift' | 'drawUntilColor' | 'shield' | 'counter' | 'wild';
-// value: number 0-9; draw amount; reverseDraw 4|10; mult/div 2; else null. NEVER undefined.
+// value: number 0-10; draw amount; reverseDraw 4|10; mult/div 2; else null. NEVER undefined.
 export interface Card { id: string; color: CardColor; kind: CardKind; value: number | null }
 
 export const COLORS: Exclude<CardColor, 'black'>[] = ['red', 'green', 'blue', 'yellow'];
@@ -11,7 +11,7 @@ export const isBlack = (c: Card): boolean => c.color === 'black';
 export const isDraw = (c: Card): boolean => c.kind === 'draw';
 
 export interface DeckCounts {
-  numberPerColor: number;       // of EACH rank 0-9, per color
+  numberPerColor: number;       // of EACH rank 0-10, per color
   colorDraw2PerColor: number; colorDraw4PerColor: number;
   playAgainPerColor: number; skipPerColor: number; minusPerColor: number;
   blackDraw2: number; blackDraw4: number; blackDraw6: number; blackDraw8: number; blackDraw10: number;
@@ -35,7 +35,7 @@ export function buildDeck(counts: DeckCounts): Card[] {
   let n = 0;
   const push = (c: Omit<Card, 'id'>, times = 1) => { for (let i = 0; i < times; i++) cards.push({ ...c, id: `c${n++}` }); };
   for (const color of COLORS) {
-    for (let v = 0; v <= 9; v++) push({ color, kind: 'number', value: v }, counts.numberPerColor);
+    for (let v = 0; v <= 10; v++) push({ color, kind: 'number', value: v }, counts.numberPerColor);
     push({ color, kind: 'draw', value: 2 }, counts.colorDraw2PerColor);
     push({ color, kind: 'draw', value: 4 }, counts.colorDraw4PerColor);
     push({ color, kind: 'playAgain', value: null }, counts.playAgainPerColor);
@@ -64,6 +64,21 @@ export function buildDeck(counts: DeckCounts): Card[] {
   push({ color: B, kind: 'shield', value: null }, counts.shield);
   push({ color: B, kind: 'counter', value: null }, counts.counter);
   return cards;
+}
+
+/** Short human name for a single card, used in the history log text. */
+export function cardName(card: Card): string {
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  if (card.kind === 'number') return `${cap(card.color)} ${card.value}`;
+  if (card.kind === 'draw') return `+${card.value}`;
+  if (card.kind === 'reverseDraw') return `Reverse +${card.value}`;
+  const names: Partial<Record<CardKind, string>> = {
+    mult: 'x2', div: '/2', skip: 'Skip', playAgain: 'Play again', minus: 'Minus',
+    duel: 'Duel', bomb: 'Bomb', recycle: 'Recycle', eye: 'Eye', swap: 'Swap',
+    steal: 'Steal', gift: 'Gift', drawUntilColor: 'Draw-until-color', shield: 'Shield',
+    counter: 'Counter', wild: 'Wild',
+  };
+  return names[card.kind] ?? card.kind;
 }
 
 export function cardPoints(card: Card): number {

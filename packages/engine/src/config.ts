@@ -13,7 +13,7 @@ export const deckCountsSchema = z.object({
 });
 
 export function deckTotal(d: DeckCounts): number {
-  const colored = 4 * (d.numberPerColor * 10 + d.colorDraw2PerColor + d.colorDraw4PerColor +
+  const colored = 4 * (d.numberPerColor * 11 + d.colorDraw2PerColor + d.colorDraw4PerColor +
     d.playAgainPerColor + d.skipPerColor + d.minusPerColor);
   const black = d.blackDraw2 + d.blackDraw4 + d.blackDraw6 + d.blackDraw8 + d.blackDraw10 +
     d.mult + d.div + d.duel + d.bomb + d.reverseDraw4 + d.reverseDraw10 + d.recycle + d.wild +

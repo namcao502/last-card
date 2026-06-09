@@ -15,7 +15,7 @@ function mk(over: Partial<GameState>, hands: Card[][]): GameState {
     drawPile: Array.from({ length: 40 }, (_, i) => C({ id: `d${i}`, color: 'green', value: (i % 9) + 1 })),
     discardPile: [C({ id: 'top', color: 'red', value: 5 })],
     currentColor: 'red', colorLocked: false, turnIndex: 0, direction: 1,
-    pending: null, duel: null, bombResponse: null, goAgain: false, drawnPlayable: null, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
+    pending: null, pendingUntil: null, duel: null, bombResponse: null, goAgain: false, drawnPlayable: null, winnerId: null, seed: 's', log: [], chainId: 0, eventSeq: 0, ...over,
   };
 }
 
@@ -174,9 +174,9 @@ describe('game history log', () => {
     const r2 = applyMove(r1, { type: 'play', playerId: 'p2', cardIds: ['b'] }); // extends it
     const r3 = applyMove(r2, { type: 'draw', playerId: 'p3' });                 // absorbs it
     const chain = r3.log.filter((e) => e.stackId != null);
-    expect(chain).toHaveLength(3);
-    expect(new Set(chain.map((e) => e.stackId)).size).toBe(1); // all the same chain
-    const absorb = chain.find((e) => e.kind === 'draw');
+    expect(new Set(chain.map((e) => e.stackId)).size).toBe(1);     // all the same chain
+    expect(chain.filter((e) => !e.detail)).toHaveLength(3);        // open play, extend play, absorb draw
+    const absorb = chain.find((e) => e.kind === 'draw' && !e.detail);
     expect(absorb!.drawCount).toBe(4); // 2 + 2
   });
 });

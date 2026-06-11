@@ -8,7 +8,7 @@ import { callJoinRoom } from '@/lib/functions';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useT } from '@/lib/i18n/context';
 
-export function RoomBrowser() {
+export function RoomBrowser({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const { nickname, ready } = useAuth();
   const { rooms, loading } = useLobbies();
@@ -26,17 +26,17 @@ export function RoomBrowser() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-6 py-10">
+    <div className={embedded ? 'space-y-6' : 'mx-auto w-full max-w-2xl space-y-6 px-6 py-10'}>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-black">{t.browser.title}</h1>
-        <Link href="/play?create=1" className={buttonVariants({ variant: 'outline', size: 'sm' })}>{t.browser.createRoom}</Link>
+        {!embedded && <h1 className="text-2xl font-black">{t.browser.title}</h1>}
+        <Link href="/?create" className={buttonVariants({ variant: 'outline', size: 'sm' })}>{t.browser.createRoom}</Link>
       </div>
 
       {loading && <p className="text-muted-foreground">{t.browser.loading}</p>}
 
       {!loading && rooms.length === 0 && (
         <div className="rounded-xl border border-dashed bg-card p-8 text-center text-muted-foreground">
-          {t.browser.emptyPrefix}<Link href="/play?create=1" className="font-semibold text-foreground underline">{t.browser.emptyLink}</Link>.
+          {t.browser.emptyPrefix}<Link href="/?create" className="font-semibold text-foreground underline">{t.browser.emptyLink}</Link>.
         </div>
       )}
 

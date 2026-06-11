@@ -11,6 +11,8 @@ import { usePeek } from '@/lib/hooks/usePeek';
 import { useServerNow } from '@/lib/hooks/useServerNow';
 import { useAuth } from '@/lib/auth';
 import { callSubmitMove, callForceTimeout, callPauseGame, callResumeGame } from '@/lib/functions';
+import { Layers } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { GameCard, cardLabel } from './GameCard';
 import { cardInfo } from '@/lib/card-info';
@@ -328,27 +330,27 @@ export function GameTable({ roomId }: { roomId: string }) {
             {pub.phase === 'bombResponse' ? (
               <>
                 <Button onClick={() => submit({ type: 'draw', playerId: myId })}>{t.game.accept}</Button>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>{t.game.playSelected}</Button>
+                <PlaySelectedButton count={selected.length} onClick={tryPlay} />
               </>
             ) : pub.pending ? (
               <>
                 <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>{t.game.drawAmount(pub.pending.total)}</Button>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>{t.game.playSelected}</Button>
+                <PlaySelectedButton count={selected.length} onClick={tryPlay} />
               </>
             ) : pub.pendingUntil ? (
               <>
                 <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>{t.game.drawUntil(t.colors[pub.pendingUntil.color])}</Button>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>{t.game.playSelected}</Button>
+                <PlaySelectedButton count={selected.length} onClick={tryPlay} />
               </>
             ) : drawnPlayableCardId ? (
               <>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>{t.game.playSelected}</Button>
+                <PlaySelectedButton count={selected.length} onClick={tryPlay} />
                 <Button variant="outline" onClick={() => submit({ type: 'draw', playerId: myId })}>{t.game.keepCard}</Button>
                 <span className="text-sm text-muted-foreground">{t.game.drewPlayable}</span>
               </>
             ) : (
               <>
-                <Button disabled={selected.length === 0} onClick={tryPlay}>{t.game.playSelected}</Button>
+                <PlaySelectedButton count={selected.length} onClick={tryPlay} />
                 {selected.length === 0 && <span className="text-sm text-muted-foreground">{t.game.selectHint}</span>}
               </>
             )}
@@ -403,9 +405,20 @@ export function GameTable({ roomId }: { roomId: string }) {
         <Overlay onClose={() => setDraft(null)}>
           {needsColor(draft.effective) && !draft.chosenColor && (
             <Picker title={t.game.chooseColor}>
-              {WILD_COLORS.map((c) => (
-                <Button key={c} className="text-white" style={{ backgroundColor: colorHex(c) }} onClick={() => finalizeDraft({ chosenColor: c })}>{t.colors[c]}</Button>
-              ))}
+              <div className="grid grid-cols-2 gap-3">
+                {WILD_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-label={t.colors[c]}
+                    onClick={() => finalizeDraft({ chosenColor: c })}
+                    className={`flex h-24 w-32 items-center justify-center rounded-2xl border-4 border-white text-lg font-extrabold shadow-lg transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lc-yellow sm:h-28 sm:w-36 ${c === 'yellow' ? 'text-lc-ink' : 'text-white'}`}
+                    style={{ backgroundColor: colorHex(c) }}
+                  >
+                    {t.colors[c]}
+                  </button>
+                ))}
+              </div>
             </Picker>
           )}
           {(!needsColor(draft.effective) || draft.chosenColor) && TARGETED.has(draft.effective.kind) && !draft.targetId && (
@@ -512,6 +525,28 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}>{children}</div>
     </div>
+  );
+}
+/** Primary table action: brand-yellow CTA showing the selected-card count, with a ready-glow when
+ *  cards are selected and a muted state when nothing is. Replaces the plain "Play selected" button. */
+function PlaySelectedButton({ count, onClick }: { count: number; onClick: () => void }) {
+  const t = useT();
+  const ready = count > 0;
+  return (
+    <button
+      type="button"
+      disabled={!ready}
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-base font-bold shadow-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lc-yellow/60',
+        ready
+          ? 'animate-play-ready bg-lc-yellow text-lc-ink hover:brightness-105 active:scale-95 motion-reduce:animate-none'
+          : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70',
+      )}
+    >
+      <Layers className="h-5 w-5" />
+      {ready ? t.game.playCount(count) : t.game.playSelected}
+    </button>
   );
 }
 function Picker({ title, children }: { title: string; children: React.ReactNode }) {

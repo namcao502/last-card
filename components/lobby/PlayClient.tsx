@@ -2,11 +2,11 @@
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n/context';
-import { CreateJoin } from './CreateJoin';
 import { Lobby } from './Lobby';
-import { RoomBrowser } from './RoomBrowser';
 import { SignInGate } from './SignInGate';
 
+// /play is only the room destination now (create/browse/join are home-page popups; the /play
+// server route redirects any non-room request to the matching home dialog).
 export function PlayClient() {
   const params = useSearchParams();
   const { user, ready } = useAuth();
@@ -15,7 +15,5 @@ export function PlayClient() {
   if (!user) return <SignInGate />;
   const room = params.get('room');
   if (room) return <Lobby roomId={room} />;
-  if (params.get('browse')) return <RoomBrowser />;
-  const mode = params.get('join') ? 'join' : 'create';
-  return <CreateJoin mode={mode} />;
+  return null;
 }

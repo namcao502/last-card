@@ -11,7 +11,7 @@ export const CONFIG_FIELDS: ConfigField[] = [
   { path: 'maxPlayers', type: 'number', label: 'Max players', min: 2, max: 10, group: 'Table' },
   { path: 'startingHandSize', type: 'number', label: 'Starting hand size', min: 1, max: 15, group: 'Table' },
   // Colored deck counts (per color x4)
-  { path: 'deck.numberPerColor', type: 'number', label: 'Numbers (each 0-9, per color)', min: 0, max: 4, group: 'Colored cards' },
+  { path: 'deck.numberPerColor', type: 'number', label: 'Numbers (each 0-10, per color)', min: 0, max: 4, group: 'Colored cards' },
   { path: 'deck.colorDraw2PerColor', type: 'number', label: 'Colored +2 (per color)', min: 0, max: 6, group: 'Colored cards' },
   { path: 'deck.colorDraw4PerColor', type: 'number', label: 'Colored +4 (per color)', min: 0, max: 6, group: 'Colored cards' },
   { path: 'deck.playAgainPerColor', type: 'number', label: 'Play-again (per color)', min: 0, max: 6, group: 'Colored cards' },

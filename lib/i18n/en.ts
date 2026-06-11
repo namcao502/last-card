@@ -86,6 +86,7 @@ export const en = {
     draw: 'DRAW',
     deckSuffix: 'in deck',
     playSelected: 'Play selected',
+    playCount: (n: number) => `Play ${n} ${n === 1 ? 'card' : 'cards'}`,
     selectHint: 'Tap a card below to select, then Play.',
     keepCard: 'Keep card',
     drewPlayable: 'You drew a card you can play - play it, or keep it.',
@@ -187,7 +188,7 @@ export const en = {
     fields: {
       'maxPlayers': 'Max players',
       'startingHandSize': 'Starting hand size',
-      'deck.numberPerColor': 'Numbers (each 0-9, per color)',
+      'deck.numberPerColor': 'Numbers (each 0-10, per color)',
       'deck.colorDraw2PerColor': 'Colored +2 (per color)',
       'deck.colorDraw4PerColor': 'Colored +4 (per color)',
       'deck.playAgainPerColor': 'Play-again (per color)',
@@ -224,6 +225,8 @@ export const en = {
     createRoom: 'Create a Room',
     browseRooms: 'Browse Rooms',
     joinWithCode: 'Join with Code',
+    badgeLabel: 'Live',
+    badgeValue: 'Real-time sync',
   },
   features: {
     builderTitle: 'Full deck builder',
@@ -267,7 +270,7 @@ export const en = {
     sectionBlack: 'Black (colorless) cards',
     sectionKey: 'Key rules',
     items: {
-      numbersName: 'Numbers 0-9',
+      numbersName: 'Numbers 0-10',
       numbersDesc: 'Match by color or number. Play a pair (same color+number), a run of 3+ consecutive (e.g. 6-7-8), or three consecutive pairs - runs lock the next player to that color.',
       coloredDrawsName: '+2 / +4',
       coloredDrawsDesc: 'Start or extend a draw stack. Colored draw cards can stack across colors when the value is equal or higher.',

@@ -27,7 +27,7 @@ function errMsg(e: unknown, t: Dict): string {
   return t.errors.generic;
 }
 
-export function CreateJoin({ mode }: { mode: 'create' | 'join' }) {
+export function CreateJoin({ mode, embedded = false }: { mode: 'create' | 'join'; embedded?: boolean }) {
   const router = useRouter();
   const t = useT();
   const { nickname, setNickname, ready } = useAuth();
@@ -55,8 +55,8 @@ export function CreateJoin({ mode }: { mode: 'create' | 'join' }) {
   const codeReady = code.trim().length >= LIMITS.roomCodeLength;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-6 py-10">
-      <h1 className="text-2xl font-black">{mode === 'join' ? t.createJoin.joinTitle : t.createJoin.createTitle}</h1>
+    <div className={embedded ? 'space-y-6' : 'mx-auto w-full max-w-2xl space-y-6 px-6 py-10'}>
+      {!embedded && <h1 className="text-2xl font-black">{mode === 'join' ? t.createJoin.joinTitle : t.createJoin.createTitle}</h1>}
       <div className="space-y-2">
         <Label htmlFor="nick">{t.createJoin.nicknameLabel}</Label>
         <Input id="nick" value={nickname} onChange={(e) => setNickname(e.target.value.slice(0, LIMITS.nicknameMax))} placeholder={t.createJoin.nicknamePlaceholder} maxLength={LIMITS.nicknameMax} />
@@ -71,7 +71,7 @@ export function CreateJoin({ mode }: { mode: 'create' | 'join' }) {
             <Button variant="outline" disabled={busy || !ready || !codeReady} onClick={() => join('audience')}>{t.createJoin.watchAsAudience}</Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            {t.createJoin.or}{' '}<Link href="/play?browse=1" className="font-semibold text-foreground underline">{t.createJoin.browsePrompt}</Link>
+            {t.createJoin.or}{' '}<Link href="/?browse" className="font-semibold text-foreground underline">{t.createJoin.browsePrompt}</Link>
           </p>
         </div>
       ) : (

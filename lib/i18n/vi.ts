@@ -82,6 +82,7 @@ export const vi: Dict = {
     deckSuffix: 'trong bộ',
     playSelected: 'Đánh bài đã chọn',
     playCount: (n: number) => `Đánh ${n} lá`,
+    yourTurn: 'Lượt của bạn',
     selectHint: 'Chạm vào lá bài bên dưới để chọn, rồi Đánh.',
     keepCard: 'Giữ bài',
     drewPlayable: 'Bạn vừa rút được lá có thể đánh - đánh nó, hoặc giữ lại.',
@@ -156,6 +157,13 @@ export const vi: Dict = {
     generic: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     moveRejected: 'Nước đi bị từ chối',
     pauseError: 'Không thể thay đổi tạm dừng',
+  },
+  install: {
+    title: 'Cài đặt Last Card',
+    subtitle: 'Thêm vào màn hình chính để chơi toàn màn hình như ứng dụng.',
+    cta: 'Cài đặt',
+    iosHint: 'Chạm nút Chia sẻ, rồi chọn "Thêm vào Màn hình chính".',
+    dismiss: 'Bỏ qua',
   },
   deck: {
     presets: 'Mẫu có sẵn:',

@@ -5,7 +5,8 @@ import { FeatureGrid } from '@/components/marketing/FeatureGrid';
 import { HowToPlaySection } from '@/components/marketing/HowToPlaySection';
 import { RulesSection } from '@/components/marketing/RulesSection';
 import { AboutSection } from '@/components/marketing/AboutSection';
-import { RoomDialogs } from '@/components/lobby/RoomDialogs';
+import { RoomDialogsLazy } from '@/components/lobby/RoomDialogsLazy';
+import { InstallPrompt } from '@/components/InstallPrompt';
 
 export default function Home() {
   return (
@@ -16,10 +17,12 @@ export default function Home() {
       <HowToPlaySection />
       <RulesSection />
       <AboutSection />
-      {/* Create / browse / join popups, opened via ?create / ?browse / ?join. */}
+      {/* Create / browse / join popups, opened via ?create / ?browse / ?join. Lazy-loaded so the
+          dialog code + Firebase db/functions only load when a dialog is actually requested. */}
       <Suspense fallback={null}>
-        <RoomDialogs />
+        <RoomDialogsLazy />
       </Suspense>
+      <InstallPrompt />
     </main>
   );
 }

@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy Firebase config so the client SDK initializes during build + smoke tests without real
+      # credentials. The smoke tests are logged-out and never make real Firebase calls.
+      NEXT_PUBLIC_FIREBASE_API_KEY: test-api-key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: test.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_DATABASE_URL: https://test-default-rtdb.firebaseio.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: test
+      NEXT_PUBLIC_FIREBASE_APP_ID: test-app-id
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies (web)
+        run: npm ci
+
+      - name: Install dependencies (functions)
+        run: npm --prefix functions ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (web)
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck (functions)
+        run: npm --prefix functions run typecheck
+
+      - name: Engine unit tests
+        run: npm run test:engine
+
+      - name: Production build
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E smoke tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

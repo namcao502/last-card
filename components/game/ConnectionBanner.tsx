@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { onValue, ref } from 'firebase/database';
-import { rtdb } from '@/lib/firebase';
+import { rtdb } from '@/lib/firebase/db';
 import { useT } from '@/lib/i18n/context';
 
 export function ConnectionBanner({ eliminated }: { eliminated: boolean }) {

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { onDisconnect, ref, set, onValue } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { rtdb } from '../firebase/db';
 import { useAuth } from '../auth';
 
 export function usePresence(roomId: string | null) {

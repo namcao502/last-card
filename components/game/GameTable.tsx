@@ -209,6 +209,8 @@ export function GameTable({ roomId }: { roomId: string }) {
   const selectedCards = selected.map((id) => hand.find((c) => c.id === id)).filter(Boolean) as Card[];
   const describeCard = describedCard(selectedCards);
   const sortedHand = [...hand].sort(compareHand);   // display order only; selection is by id
+  // Screen-reader cue: announce when it becomes the player's turn (the moment they must act).
+  const liveMessage = !eliminated && myTurn && ACTIONABLE_PHASES.includes(pub.phase) ? t.game.yourTurn : '';
 
   // RD19: a recycled minus is black, so dumping every remaining card would empty the hand on a black
   // card - illegal. (A direct, colored minus may empty the hand to win, so this only guards recycle.)
@@ -219,6 +221,7 @@ export function GameTable({ roomId }: { roomId: string }) {
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_300px]">
       <div className="space-y-4">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">{liveMessage}</div>
         <ConnectionBanner eliminated={!!eliminated} />
         <RoundEndDialog roomId={roomId} meta={meta} seats={seats} winnerId={pub.winnerId} />
 

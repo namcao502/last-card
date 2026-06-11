@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated / non-source:
+    "functions/lib/**", // esbuild bundle (engine + zod inlined)
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

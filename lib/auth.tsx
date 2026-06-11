@@ -5,7 +5,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { toast } from 'sonner';
-import { auth } from './firebase';
+import { auth } from './firebase/auth';
 
 /** Map a Firebase Auth error code to a user-facing message, keeping the raw code for unmapped cases. */
 function authErrorMessage(code: string): string {
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('nickname') ?? '' : '';
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load persisted nickname on mount (client-only)
     setNick(stored);
     // No auto sign-in: just resolve the current auth state. The user may be null.
     const unsub = onAuthStateChanged(auth, (u) => {

@@ -87,6 +87,7 @@ export const en = {
     deckSuffix: 'in deck',
     playSelected: 'Play selected',
     playCount: (n: number) => `Play ${n} ${n === 1 ? 'card' : 'cards'}`,
+    yourTurn: 'Your turn',
     selectHint: 'Tap a card below to select, then Play.',
     keepCard: 'Keep card',
     drewPlayable: 'You drew a card you can play - play it, or keep it.',
@@ -164,6 +165,13 @@ export const en = {
     generic: 'Something went wrong. Please try again.',
     moveRejected: 'Move rejected',
     pauseError: 'Could not change pause',
+  },
+  install: {
+    title: 'Install Last Card',
+    subtitle: 'Add it to your home screen for a full-screen, app-like experience.',
+    cta: 'Install',
+    iosHint: 'Tap the Share button, then "Add to Home Screen".',
+    dismiss: 'Dismiss',
   },
   // Deck builder (create-room) - chrome, group headings, and per-field labels (keyed by config path).
   deck: {

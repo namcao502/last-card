@@ -10,6 +10,12 @@ functions/lib/
 dist/
 *.tsbuildinfo
 
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # env files (App Hosting uses apphosting.yaml; keep the .example template)
 .env
 .env*.local

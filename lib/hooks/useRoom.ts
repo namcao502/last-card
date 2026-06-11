@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { onValue, ref } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { rtdb } from '../firebase/db';
 import type { PublicView } from '@last-card/engine';
 
 export interface SeatRow { id: string; name: string; isBot: boolean; seatIndex: number; connected: boolean; handCount: number; status: 'active' | 'out'; turn: boolean; isAudience?: boolean }

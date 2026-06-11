@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { onChildAdded, push, ref, query, limitToLast } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { rtdb } from '../firebase/db';
 import { useAuth } from '../auth';
 
 export interface ChatMsg { id: string; uid: string; name: string; kind: 'text' | 'emote'; body: string; ts: number }
@@ -11,6 +11,7 @@ export function useChat(roomId: string | null, nickname: string) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   useEffect(() => {
     if (!roomId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset messages when switching rooms before re-subscribing
     setMessages([]);
     const q = query(ref(rtdb, `rooms/${roomId}/chat`), limitToLast(50));
     const u = onChildAdded(q, (s) => setMessages(m => [...m, { id: s.key!, ...(s.val() as Omit<ChatMsg, 'id'>) }]));

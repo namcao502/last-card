@@ -10,6 +10,7 @@ export function ThemeToggle() {
   // The theme is only known on the client (from localStorage / system),
   // so defer theme-dependent text until after mount to avoid a hydration mismatch.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- flag client mount to avoid a theme hydration mismatch
     setMounted(true);
   }, []);
 

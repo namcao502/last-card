@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { onValue, ref } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { rtdb } from '../firebase/db';
 
 export interface LobbyRoom {
   code: string;

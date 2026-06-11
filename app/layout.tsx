@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import "./globals.css";
@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n/context";
 import { LOCALE_COOKIE, pickLocale } from "@/lib/i18n";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 // Distinctive display face for headings/wordmark; body keeps the fast system stack.
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -14,6 +15,12 @@ const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", 
 export const metadata: Metadata = {
   title: "Last Card",
   description: "Last Card - a fast, real-time multiplayer card game where you race to empty your hand.",
+  applicationName: "Last Card",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Last Card" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#15161c",
 };
 
 export default async function RootLayout({
@@ -40,6 +47,7 @@ export default async function RootLayout({
             <Toaster />
           </LanguageProvider>
         </ThemeProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

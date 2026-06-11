@@ -22,9 +22,11 @@ function Blob({ variant, className }: { variant: keyof typeof PATHS; className?:
 export function HeroBlobs({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden', className)}>
-      <Blob variant="a" className="absolute -left-24 -top-28 h-80 w-80 text-lc-yellow/25 blur-2xl animate-blob-1 motion-reduce:animate-none" />
-      <Blob variant="b" className="absolute -right-20 top-8 h-72 w-72 text-lc-red/20 blur-2xl animate-blob-2 motion-reduce:animate-none" />
-      <Blob variant="c" className="absolute -bottom-10 left-1/3 h-72 w-72 text-lc-blue/15 blur-2xl animate-blob-3 motion-reduce:animate-none" />
+      {/* will-change-transform promotes each blob to its own layer so the blur isn't re-rasterized
+          every frame; the third is dropped on small screens to keep low-end mobile smooth. */}
+      <Blob variant="a" className="absolute -left-24 -top-28 h-80 w-80 text-lc-yellow/25 blur-2xl will-change-transform animate-blob-1 motion-reduce:animate-none" />
+      <Blob variant="b" className="absolute -right-20 top-8 h-72 w-72 text-lc-red/20 blur-2xl will-change-transform animate-blob-2 motion-reduce:animate-none" />
+      <Blob variant="c" className="absolute -bottom-10 left-1/3 hidden h-72 w-72 text-lc-blue/15 blur-2xl will-change-transform animate-blob-3 motion-reduce:animate-none sm:block" />
     </div>
   );
 }
